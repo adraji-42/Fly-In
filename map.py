@@ -1,0 +1,98 @@
+from regex import MapRegex
+from mytyping import MapAttributes
+from hub import StartHub, Hub, EndHub
+from typing import List, Dict, Optional
+from factorys import HubFactory, ConnectionFactory
+from exceptions import MapParsingError, ConnectionError, HubError
+
+
+class MapParser:
+    def __init__(self, map_path):
+        with open(map_path, 'r') as file:
+            self.__content = file.readlines()
+        self.h_factory = HubFactory()
+        self.c_factory = ConnectionFactory()
+
+    def parse(self) -> MapAttributes:
+        all_hubs: Dict[str, Hub] = dict()
+        start_hub: Optional[StartHub] = None
+        hubs: Dict[str, Hub] = dict()
+        end_hub: Optional[EndHub] = None
+
+        for n, line in enumerate(self.__content, 1):
+            if '#' in line:
+                if not (line := line.split('#')[0].strip()):
+                    continue
+            elif not line.strip():
+                continue
+
+            match = MapRegex.NB_DRONS.match(line)
+
+            if not match:
+                raise MapParsingError()
+
+            if match.group('key').lower() != 'nb_drones':
+                raise MapParsingError()
+
+            try:
+                nb_drones = int(match.group('value'))
+                if nb_drones < 0:
+                    raise MapParsingError()
+                elif nb_drones == 0:
+                    raise MapParsingError()
+            except ValueError:
+                raise MapParsingError()
+
+            break
+
+        for n, line in enumerate(self.__content[n:], n + 1):
+            if '#' in line:
+                if not (line := line.split('#')[0].strip()):
+                    continue
+            elif not line.strip():
+                continue
+
+            if line.lstrip().lower().startswith("connection"):
+                try:
+                    self.c_factory.create(line, all_hubs)
+                except ConnectionError:
+                    raise MapParsingError()
+            else:
+                try:
+                    hub = self.h_factory.create(line)
+
+                    if isinstance(hub, StartHub):
+                        if start_hub is not None:
+                            raise MapParsingError()
+                        start_hub = hub
+                    elif isinstance(hub, EndHub):
+                        if end_hub is not None:
+                            raise MapParsingError()
+                        end_hub = hub
+                    else:
+                        hubs[hub.name] = hub
+
+                    if hub.name in all_hubs:
+                        raise MapParsingError()
+
+                    all_hubs[hub.name] = hub
+                except HubError:
+                    raise MapParsingError()
+
+        if not start_hub:
+            raise MapParsingError()
+        if not end_hub:
+            raise MapParsingError()
+
+        return nb_drones, start_hub, hubs, end_hub
+
+
+class Map:
+    def __init__(self, map_path: str):
+        self.nb_drones: int
+        self.start_hub: StartHub
+        self.hubs: List[Hub]
+        self.end_hub: EndHub
+        self.nb_drones, self.start_hub, self.hubs, self.end_hub = MapParser(
+            map_path
+        ).parse()
