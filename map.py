@@ -19,6 +19,8 @@ class MapParser:
         hubs: Dict[str, Hub] = dict()
         end_hub: Optional[EndHub] = None
 
+        nb_drones = None
+
         for n, line in enumerate(self.__content, 1):
             if '#' in line:
                 if not (line := line.split('#')[0].strip()):
@@ -45,6 +47,9 @@ class MapParser:
 
             break
 
+        if nb_drones is None:
+            raise MapParsingError()
+
         for n, line in enumerate(self.__content[n:], n + 1):
             if '#' in line:
                 if not (line := line.split('#')[0].strip()):
@@ -61,6 +66,9 @@ class MapParser:
                 try:
                     hub = self.h_factory.create(line)
 
+                    if hub.name in all_hubs:
+                        raise MapParsingError()
+
                     if isinstance(hub, StartHub):
                         if start_hub is not None:
                             raise MapParsingError()
@@ -71,9 +79,6 @@ class MapParser:
                         end_hub = hub
                     else:
                         hubs[hub.name] = hub
-
-                    if hub.name in all_hubs:
-                        raise MapParsingError()
 
                     all_hubs[hub.name] = hub
                 except HubError:

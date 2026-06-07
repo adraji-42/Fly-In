@@ -15,32 +15,39 @@ class HubParser(ZoneParser):
         def parse(
             line: str, metadata_str: str
         ) -> Dict[str, HubMetaData]:
-            if HubRegex.HUB_METADATA.match(metadata_str):
-                metadata = dict()
-
-                for key, value in HubRegex.PAIRS_KV.findall(metadata_str):
-                    key, value = key.strip(), value.strip()
-
-                    if key == "zone":
-                        try:
-                            metadata[key] = ZoneType(value)
-                        except ValueError:
-                            raise HubMetaDataParsingError()
-                    elif key == "color":
-                        if not value.isalpha():
-                            raise HubMetaDataParsingError()
-                        metadata[key] = value
-                    elif key == "max_drones":
-                        try:
-                            metadata[key] = int(value)
-                        except ValueError:
-                            raise HubMetaDataParsingError()
-                    else:
-                        raise HubMetaDataParsingError()
-
-                return metadata
-            else:
+            if not HubRegex.HUB_METADATA.match(metadata_str):
                 raise HubMetaDataParsingError()
+
+            metadata = dict()
+            remaining = metadata_str.strip()
+
+            while remaining:
+                match = HubRegex.PAIRS_KV.match(remaining)
+                if not match:
+                    raise HubMetaDataParsingError()
+
+                key = match.group("key").strip()
+                value = match.group("value").strip()
+                remaining = remaining[match.end():].strip()
+
+                if key == "zone":
+                    try:
+                        metadata[key] = ZoneType(value)
+                    except ValueError:
+                        raise HubMetaDataParsingError()
+                elif key == "color":
+                    if not value.isalpha():
+                        raise HubMetaDataParsingError()
+                    metadata[key] = value
+                elif key == "max_drones":
+                    try:
+                        metadata[key] = int(value)
+                    except ValueError:
+                        raise HubMetaDataParsingError()
+                else:
+                    raise HubMetaDataParsingError()
+
+            return metadata
 
     def parse(self, line: str) -> HubAttribut:
         match = HubRegex.HUB_LINE.match(line)
@@ -70,7 +77,7 @@ class HubParser(ZoneParser):
         if metadata_str is None:
             metadata = {
                 "zone": ZoneType.NORMAL,
-                "color": "white",
+                "color": "none",
                 "max_drones": 1
             }
         elif not metadata_str.strip():
@@ -89,7 +96,7 @@ class Hub(Zone):
     ) -> None:
         super().__init__(name, x, y)
         self.__zone = metadata.get("zone", ZoneType.NORMAL)
-        self.__color = metadata.get("color", "white")
+        self.__color = metadata.get("color", "none")
         self.__max_drones = metadata.get("max_drones", 1)
 
     @property

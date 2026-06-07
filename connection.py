@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from mytyping import ConnectionAttribut
 from regex import ConnectionRegex, ZoneRegex
 from exceptions import (
@@ -6,8 +5,6 @@ from exceptions import (
     ConnectionMetaDataParsingError
 )
 
-if TYPE_CHECKING:
-    from zone import Zone
 
 
 class ConnectionParser:
@@ -28,7 +25,7 @@ class ConnectionParser:
 
             try:
                 max_link_capacity = int(match.group("value"))
-                if max_link_capacity < 0:
+                if max_link_capacity <= 0:
                     raise ConnectionMetaDataParsingError()
                 return max_link_capacity
             except ValueError:
@@ -50,14 +47,14 @@ class ConnectionParser:
             if not metadata_str.strip():
                 raise ConnectionMetaDataParsingError()
             else:
-                max_link_capacity = self.ConnectionMetaDataParser.parse()
+                max_link_capacity = self.ConnectionMetaDataParser.parse(line, metadata_str.strip())
 
         return zone1, zone2, max_link_capacity
 
 
 class Connection:
     def __init__(
-        self, zone_to: "Zone", zone_type: Zone, max_link_capacity: int = 1
+        self, zone_to: str, max_link_capacity: int = 1
     ) -> None:
         self.__zone_to = zone_to
         self.__max_link_capacity = max_link_capacity

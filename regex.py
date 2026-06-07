@@ -9,7 +9,7 @@ class MapRegex:
 
 class ZoneRegex:
 
-    ZONE_NAME: Pattern = compile(r"^([^-]+)$")
+    ZONE_NAME: Pattern = compile(r"^([^-\s]+)$")
     ZONE_COORDINATE: Pattern = compile(r"^([-+]?\d+)$")
 
 
@@ -31,10 +31,10 @@ class HubRegex(ZoneRegex):
 class ConnectionRegex:
 
     CONNECTION_LINE: Pattern = compile(
-        r"\s*(?P<start>[^:\s]+)\s*:\s*(?P<zone1>[^-\s]+)\s*-\s*(?P<zone2>\S+)"
+        r"^\s*(?P<start>[^:\s]+)\s*:\s*(?P<zone1>[^-\s]+)\s*-\s*(?P<zone2>[^\s\[]+)"
         r"(?:\s*\[(?P<metadata>[^\]]*)\])?\s*$"
     )
 
     CONNECTION_METADATA: Pattern = compile(
-        r"^\s*\[\s*(?P<key>[^\s=])\s*=\s*(?P<value>\S+)\s*\]\s*$"
+        r"^\s*(?P<key>[^\s=]+)\s*=\s*(?P<value>\S+)\s*$"
     )

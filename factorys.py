@@ -1,10 +1,9 @@
 from zone import Zone
 from typing import Dict
 from abc import ABC, abstractmethod
-from exceptions import ConnectionError
-from connection import Connection, ConnectionParser
 from hub import StartHub, Hub, EndHub, HubParser
-
+from connection import Connection, ConnectionParser
+from exceptions import HubParsingError, ConnectionParsingError
 
 class ZoneFactory(ABC):
 
@@ -17,28 +16,44 @@ class HubFactory(ZoneFactory):
 
     def __init__(self) -> None:
         self.__parser = HubParser()
+        self.__seen = set()
 
     def create(self, line: str) -> Hub:
-        _type, *args = self.__parser.parse(line)
+        _type, name, x, y, metadata = self.__parser.parse(line)
+
+        if (x, y) in self.__seen:
+            raise HubParsingError()
+
+        self.__seen.add((x, y))
+
         if _type == "start_hub":
-            return StartHub(*args)
+            return StartHub(name, x, y, metadata)
         if _type == "hub":
-            return Hub(*args)
+            return Hub(name, x, y, metadata)
         if _type == "end_hub":
-            return EndHub(*args)
+            return EndHub(name, x, y, metadata)
 
 
 class ConnectionFactory:
 
     def __init__(self) -> None:
         self.__parser = ConnectionParser()
+        self.__seen = set()
 
     def create(self, line: str, zones: Dict[str, Zone]) -> None:
         zone_from, zone_to, max_link_capacity = self.__parser.parse(line)
 
+        if zone_from == zone_to:
+            raise ConnectionParsingError()
+
         if zone_from not in zones:
-            raise ConnectionError()
+            raise ConnectionParsingError()
         if zone_to not in zones:
-            raise ConnectionError()
+            raise ConnectionParsingError()
+
+        pair = frozenset({zone_from, zone_to})
+        if pair in self.__seen:
+            raise ConnectionParsingError()
+        self.__seen.add(pair)
 
         zones[zone_from].connect(Connection(zone_to, max_link_capacity))
