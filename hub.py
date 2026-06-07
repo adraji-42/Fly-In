@@ -16,7 +16,7 @@ class HubParser(ZoneParser):
             line: str, metadata_str: str
         ) -> Dict[str, HubMetaData]:
             if not HubRegex.HUB_METADATA.match(metadata_str):
-                raise HubMetaDataParsingError()
+                raise HubMetaDataParsingError(line=line, metadata=metadata_str)
 
             metadata = dict()
             remaining = metadata_str.strip()
@@ -24,7 +24,7 @@ class HubParser(ZoneParser):
             while remaining:
                 match = HubRegex.PAIRS_KV.match(remaining)
                 if not match:
-                    raise HubMetaDataParsingError()
+                    raise HubMetaDataParsingError(line=line, metadata=metadata_str)
 
                 key = match.group("key").strip()
                 value = match.group("value").strip()
@@ -34,18 +34,18 @@ class HubParser(ZoneParser):
                     try:
                         metadata[key] = ZoneType(value)
                     except ValueError:
-                        raise HubMetaDataParsingError()
+                        raise HubMetaDataParsingError(line=line, metadata=metadata_str)
                 elif key == "color":
                     if not value.isalpha():
-                        raise HubMetaDataParsingError()
+                        raise HubMetaDataParsingError(line=line, metadata=metadata_str)
                     metadata[key] = value
                 elif key == "max_drones":
                     try:
                         metadata[key] = int(value)
                     except ValueError:
-                        raise HubMetaDataParsingError()
+                        raise HubMetaDataParsingError(line=line, metadata=metadata_str)
                 else:
-                    raise HubMetaDataParsingError()
+                    raise HubMetaDataParsingError(line=line, metadata=metadata_str)
 
             return metadata
 
@@ -53,7 +53,7 @@ class HubParser(ZoneParser):
         match = HubRegex.HUB_LINE.match(line)
 
         if not match:
-            raise HubParsingError()
+            raise HubParsingError(line=line)
 
         _type = match.group("type").lower()
         name = match.group("name")
@@ -64,13 +64,13 @@ class HubParser(ZoneParser):
         y_match = HubRegex.ZONE_COORDINATE.match(y)
 
         if not type_match:
-            raise HubParsingError()
+            raise HubParsingError(line=line)
         if not name_match:
-            raise HubParsingError()
+            raise HubParsingError(line=line)
         if not x_match:
-            raise HubParsingError()
+            raise HubParsingError(line=line)
         if not y_match:
-            raise HubParsingError()
+            raise HubParsingError(line=line)
 
         metadata_str = match.group("metadata")
 
@@ -81,7 +81,7 @@ class HubParser(ZoneParser):
                 "max_drones": 1
             }
         elif not metadata_str.strip():
-            raise HubMetaDataParsingError()
+            raise HubMetaDataParsingError(line=line, metadata=metadata_str)
         else:
             metadata = self.HubMetaDataParser.parse(
                 line, metadata_str.strip()

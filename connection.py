@@ -18,34 +18,34 @@ class ConnectionParser:
             match = ConnectionRegex.CONNECTION_METADATA.match(metadata_str)
 
             if not match:
-                raise ConnectionMetaDataParsingError()
+                raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
 
             if match.group("key") != "max_link_capacity":
-                raise ConnectionMetaDataParsingError()
+                raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
 
             try:
                 max_link_capacity = int(match.group("value"))
                 if max_link_capacity <= 0:
-                    raise ConnectionMetaDataParsingError()
+                    raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
                 return max_link_capacity
             except ValueError:
-                raise ConnectionMetaDataParsingError()
+                raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
 
     def parse(self, line: str) -> ConnectionAttribut:
         match = ConnectionRegex.CONNECTION_LINE.match(line)
 
         if not match:
-            raise ConnectionParsingError()
+            raise ConnectionParsingError(line=line)
 
         zone1, zone2 = match.group("zone1"), match.group("zone2")
         if not ZoneRegex.ZONE_NAME.match(zone2):
-            raise ConnectionParsingError()
+            raise ConnectionParsingError(line=line)
 
         max_link_capacity = 1
         metadata_str = match.group("metadata")
         if metadata_str is not None:
             if not metadata_str.strip():
-                raise ConnectionMetaDataParsingError()
+                raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
             else:
                 max_link_capacity = self.ConnectionMetaDataParser.parse(line, metadata_str.strip())
 
