@@ -1,9 +1,9 @@
-from dataclasses import dataclass
-from enum import StrEnum
 from re import Pattern
-from typing import Callable, Optional, Tuple
+from enum import StrEnum
 from mytyping import ZoneType
+from dataclasses import dataclass
 from regex import ConnectionRegex, MapRegex
+from typing import Callable, Optional, Tuple
 
 
 class Color(StrEnum):
@@ -626,9 +626,11 @@ class MapParsingError(MapError):
             location = (
                 f"line {line_number}, column {problem.span.start + 1}"
                 if line_number is not None and problem.exact
-                else f"line {line_number}; the exact column could not be determined"
+                else f"line {line_number}; "
+                "the exact column could not be determined"
                 if line_number is not None
-                else "the current line; the exact column could not be determined"
+                else "the current line; "
+                "the exact column could not be determined"
             )
             message = (
                 f"Invalid map file at {location}.\n"
