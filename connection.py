@@ -6,7 +6,6 @@ from exceptions import (
 )
 
 
-
 class ConnectionParser:
 
     class ConnectionMetaDataParser:
@@ -18,18 +17,30 @@ class ConnectionParser:
             match = ConnectionRegex.CONNECTION_METADATA.match(metadata_str)
 
             if not match:
-                raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
+                raise ConnectionMetaDataParsingError(
+                    line=line,
+                    metadata=metadata_str,
+                )
 
             if match.group("key") != "max_link_capacity":
-                raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
+                raise ConnectionMetaDataParsingError(
+                    line=line,
+                    metadata=metadata_str,
+                )
 
             try:
                 max_link_capacity = int(match.group("value"))
                 if max_link_capacity <= 0:
-                    raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
+                    raise ConnectionMetaDataParsingError(
+                        line=line,
+                        metadata=metadata_str,
+                    )
                 return max_link_capacity
             except ValueError:
-                raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
+                raise ConnectionMetaDataParsingError(
+                    line=line,
+                    metadata=metadata_str,
+                )
 
     def parse(self, line: str) -> ConnectionAttribut:
         match = ConnectionRegex.CONNECTION_LINE.match(line)
@@ -45,9 +56,15 @@ class ConnectionParser:
         metadata_str = match.group("metadata")
         if metadata_str is not None:
             if not metadata_str.strip():
-                raise ConnectionMetaDataParsingError(line=line, metadata=metadata_str)
+                raise ConnectionMetaDataParsingError(
+                    line=line,
+                    metadata=metadata_str,
+                )
             else:
-                max_link_capacity = self.ConnectionMetaDataParser.parse(line, metadata_str.strip())
+                max_link_capacity = self.ConnectionMetaDataParser.parse(
+                    line,
+                    metadata_str.strip(),
+                )
 
         return zone1, zone2, max_link_capacity
 

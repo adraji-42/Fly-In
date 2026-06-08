@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import StrEnum
-from re import Pattern, compile
+from re import Pattern
 from typing import Callable, Optional, Tuple
 from mytyping import ZoneType
 from regex import ConnectionRegex, MapRegex
@@ -107,7 +107,8 @@ class HubMetadataProblemLocator:
                 TextSpan.whole(self.metadata),
                 "the metadata block is empty.",
                 "at least one key=value pair or no metadata block at all.",
-                "remove the empty brackets or add metadata such as zone=normal.",
+                "remove the empty brackets or add metadata such as "
+                "zone=normal.",
                 False,
             )
 
@@ -122,7 +123,10 @@ class HubMetadataProblemLocator:
 
             if not key:
                 return ParsingProblem(
-                    TextSpan(self.index, min(self.index + 1, len(self.metadata))),
+                    TextSpan(
+                        self.index,
+                        min(self.index + 1, len(self.metadata)),
+                    ),
                     "a metadata key is missing before '='.",
                     "a key named zone, color, or max_drones.",
                     "add a valid key before the equals sign.",
@@ -130,7 +134,10 @@ class HubMetadataProblemLocator:
                 )
 
             self._skip_spaces()
-            if self.index >= len(self.metadata) or self.metadata[self.index] != "=":
+            if (
+                self.index >= len(self.metadata)
+                or self.metadata[self.index] != "="
+            ):
                 return ParsingProblem(
                     key_span,
                     f"'{key}' is not followed by '='.",
@@ -161,12 +168,16 @@ class HubMetadataProblemLocator:
             TextSpan.whole(self.metadata),
             "the metadata does not match the required format.",
             "space-separated key=value pairs.",
-            "rewrite the metadata as key=value pairs, for example zone=normal color=blue max_drones=2.",
+            "rewrite the metadata as key=value pairs, for example "
+            "zone=normal color=blue max_drones=2.",
             False,
         )
 
     def _skip_spaces(self) -> None:
-        while self.index < len(self.metadata) and self.metadata[self.index].isspace():
+        while (
+            self.index < len(self.metadata)
+            and self.metadata[self.index].isspace()
+        ):
             self.index += 1
 
     def _read_key(self) -> str:
@@ -181,7 +192,10 @@ class HubMetadataProblemLocator:
 
     def _read_value(self) -> str:
         start = self.index
-        while self.index < len(self.metadata) and not self.metadata[self.index].isspace():
+        while (
+            self.index < len(self.metadata)
+            and not self.metadata[self.index].isspace()
+        ):
             self.index += 1
         return self.metadata[start:self.index]
 
@@ -241,8 +255,10 @@ class ConnectionMetadataProblemLocator:
             return ParsingProblem(
                 TextSpan.whole(self.metadata),
                 "the metadata block is empty.",
-                "max_link_capacity=<positive integer> or no metadata block at all.",
-                "remove the empty brackets or add metadata such as max_link_capacity=1.",
+                "max_link_capacity=<positive integer> or no metadata block "
+                "at all.",
+                "remove the empty brackets or add metadata such as "
+                "max_link_capacity=1.",
                 False,
             )
 
@@ -330,7 +346,8 @@ class ConnectionMetadataProblemLocator:
         return ParsingProblem(
             TextSpan.whole(self.metadata),
             "the metadata contains extra or misplaced text.",
-            "exactly one key=value pair: max_link_capacity=<positive integer>.",
+            "exactly one key=value pair: "
+            "max_link_capacity=<positive integer>.",
             "remove extra text and keep one valid metadata pair.",
             False,
         )
@@ -395,7 +412,11 @@ class MapLineProblemLocator:
 
 
 class LineHighlighter:
-    def __init__(self, context: SourceContext, highlighter: TextHighlighter) -> None:
+    def __init__(
+        self,
+        context: SourceContext,
+        highlighter: TextHighlighter,
+    ) -> None:
         self.context = context
         self.highlighter = highlighter
 
@@ -415,7 +436,8 @@ class LineHighlighter:
             metadata = self.context.metadata or ""
             highlighted_metadata = self.highlighted_metadata(problem)
             return (
-                f"{self.context.line[:metadata_span.start]}{highlighted_metadata}"
+                f"{self.context.line[:metadata_span.start]}"
+                f"{highlighted_metadata}"
                 f"{self.context.line[metadata_span.start + len(metadata):]}"
             )
 
@@ -455,7 +477,10 @@ class MetadataMessage:
         location = (
             f"column {self.line_span.start + 1}"
             if self.line_span.is_known
-            else "the metadata section; the exact column could not be determined"
+            else (
+                "the metadata section; the exact column could not be "
+                "determined"
+            )
         )
         message = (
             f"Invalid {self.subject} at {location}.\n"
@@ -510,7 +535,8 @@ class MapParsingMessage:
         if "Line:" not in original_text:
             message += f"Line: {self._line()}\n"
         message += (
-            "How to fix it: correct the highlighted part if one is shown; otherwise "
+            "How to fix it: correct the highlighted part if one is shown; "
+            "otherwise "
             "rewrite the whole line using the documented format."
         )
         return message
@@ -526,7 +552,12 @@ class MapParsingMessage:
         return f"{location}; the exact column could not be determined"
 
     def _line(self) -> str:
-        return self.original.highlighted_line or self.original.line or self.fallback_line or "<unknown>"
+        return (
+            self.original.highlighted_line
+            or self.original.line
+            or self.fallback_line
+            or "<unknown>"
+        )
 
 
 class MapError(Exception):
@@ -559,12 +590,16 @@ class MapError(Exception):
 class MapParsingError(MapError):
     default_message = (
         "Invalid map file.\n"
-        "What is wrong: the parser found a line that does not match the map format.\n"
-        "Why it is invalid: every map must start with 'nb_drones: <positive integer>' "
+        "What is wrong: the parser found a line that does not match the map "
+        "format.\n"
+        "Why it is invalid: every map must start with "
+        "'nb_drones: <positive integer>' "
         "and then contain valid hub or connection lines.\n"
-        "Correct format: nb_drones: 3, hub: H1 0 0 [zone=normal color=blue max_drones=2], "
+        "Correct format: nb_drones: 3, "
+        "hub: H1 0 0 [zone=normal color=blue max_drones=2], "
         "or connection: H1-H2 [max_link_capacity=1].\n"
-        "How to fix it: rewrite the line using the expected format and valid values."
+        "How to fix it: rewrite the line using the expected format and valid "
+        "values."
     )
 
     def __init__(
@@ -598,9 +633,11 @@ class MapParsingError(MapError):
             message = (
                 f"Invalid map file at {location}.\n"
                 f"What is wrong: {problem.reason}\n"
-                "Why it is invalid: every map must start with 'nb_drones: <positive integer>' "
+                "Why it is invalid: every map must start with "
+                "'nb_drones: <positive integer>' "
                 "and then contain valid hub or connection lines.\n"
-                "Correct format: nb_drones: 3, hub: H1 0 0 [zone=normal color=blue max_drones=2], "
+                "Correct format: nb_drones: 3, "
+                "hub: H1 0 0 [zone=normal color=blue max_drones=2], "
                 "or connection: H1-H2 [max_link_capacity=1].\n"
                 f"What is expected here: {problem.expected}\n"
                 f"How to fix it: {problem.fix}\n"
@@ -624,10 +661,12 @@ class HubError(MapError):
     default_message = (
         "Invalid hub definition.\n"
         "What is wrong: the hub line does not match the expected hub syntax.\n"
-        "Why it is invalid: a hub must have a valid type, name, x coordinate, y coordinate, "
+        "Why it is invalid: a hub must have a valid type, name, x coordinate, "
+        "y coordinate, "
         "and optional metadata in square brackets.\n"
         "Correct format: hub: H1 0 0 [zone=normal color=blue max_drones=2].\n"
-        "How to fix it: use start_hub, hub, or end_hub, followed by a name and integer coordinates."
+        "How to fix it: use start_hub, hub, or end_hub, followed by a name "
+        "and integer coordinates."
     )
 
 
@@ -640,14 +679,20 @@ class HubParsingError(HubError, MapParsingError):
         **kwargs,
     ) -> None:
         if message is None and line is not None:
-            highlighted_line = TextHighlighter().highlight(line, TextSpan.whole(line))
+            highlighted_line = TextHighlighter().highlight(
+                line,
+                TextSpan.whole(line),
+            )
             message = (
                 "Invalid hub definition.\n"
                 "What is wrong: this line is not a valid hub.\n"
-                "Why it is invalid: the parser expected a hub type, a name, two integer coordinates, "
+                "Why it is invalid: the parser expected a hub type, a name, "
+                "two integer coordinates, "
                 "and optional metadata in square brackets.\n"
-                "Correct format: hub: H1 0 0 [zone=normal color=blue max_drones=2].\n"
-                "How to fix it: check the hub type, spacing, name, coordinates, and metadata brackets.\n"
+                "Correct format: hub: H1 0 0 "
+                "[zone=normal color=blue max_drones=2].\n"
+                "How to fix it: check the hub type, spacing, name, "
+                "coordinates, and metadata brackets.\n"
                 f"Line: {highlighted_line}"
             )
             kwargs.setdefault("highlighted_line", highlighted_line)
@@ -695,10 +740,13 @@ class HubMetaDataParsingError(HubParsingError):
 class ConnectionError(MapError):
     default_message = (
         "Invalid connection definition.\n"
-        "What is wrong: the connection line does not match the expected connection syntax.\n"
-        "Why it is invalid: a connection must name two existing hubs and may include valid metadata.\n"
+        "What is wrong: the connection line does not match the expected "
+        "connection syntax.\n"
+        "Why it is invalid: a connection must name two existing hubs and may "
+        "include valid metadata.\n"
         "Correct format: connection: H1-H2 [max_link_capacity=1].\n"
-        "How to fix it: use two different known hub names and a positive integer capacity."
+        "How to fix it: use two different known hub names and a positive "
+        "integer capacity."
     )
 
 
@@ -711,14 +759,19 @@ class ConnectionParsingError(ConnectionError, MapParsingError):
         **kwargs,
     ) -> None:
         if message is None and line is not None:
-            highlighted_line = TextHighlighter().highlight(line, TextSpan.whole(line))
+            highlighted_line = TextHighlighter().highlight(
+                line,
+                TextSpan.whole(line),
+            )
             message = (
                 "Invalid connection definition.\n"
                 "What is wrong: this line is not a valid connection.\n"
-                "Why it is invalid: a connection must name two different valid hubs and may include "
+                "Why it is invalid: a connection must name two different "
+                "valid hubs and may include "
                 "metadata in square brackets.\n"
                 "Correct format: connection: H1-H2 [max_link_capacity=1].\n"
-                "How to fix it: check the connection keyword, hub names, separator, and metadata.\n"
+                "How to fix it: check the connection keyword, hub names, "
+                "separator, and metadata.\n"
                 f"Line: {highlighted_line}"
             )
             kwargs.setdefault("highlighted_line", highlighted_line)

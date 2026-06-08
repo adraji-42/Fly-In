@@ -1,7 +1,7 @@
 from regex import MapRegex
 from mytyping import MapAttributes
 from hub import StartHub, Hub, EndHub
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 from factorys import HubFactory, ConnectionFactory
 from exceptions import MapParsingError, ConnectionError, HubError
 
@@ -91,9 +91,9 @@ class MapParser:
                     ) from error
 
         if not start_hub:
-            raise MapParsingError()
+            raise MapParsingError("Start hub is missing")
         if not end_hub:
-            raise MapParsingError()
+            raise MapParsingError("End hub is missing")
 
         return nb_drones, start_hub, hubs, end_hub
 
@@ -102,7 +102,7 @@ class Map:
     def __init__(self, map_path: str):
         self.nb_drones: int
         self.start_hub: StartHub
-        self.hubs: List[Hub]
+        self.hubs: Dict[str, Hub]
         self.end_hub: EndHub
         self.nb_drones, self.start_hub, self.hubs, self.end_hub = MapParser(
             map_path

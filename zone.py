@@ -18,7 +18,7 @@ class Zone:
         self.__name = name
         self.__x = x
         self.__y = y
-        self.connections = set()
+        self.connections: set["Connection"] = set()
 
     @property
     def name(self) -> str:

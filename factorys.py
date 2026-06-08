@@ -5,6 +5,7 @@ from hub import StartHub, Hub, EndHub, HubParser
 from connection import Connection, ConnectionParser
 from exceptions import HubParsingError, ConnectionParsingError
 
+
 class ZoneFactory(ABC):
 
     @abstractmethod
@@ -16,7 +17,7 @@ class HubFactory(ZoneFactory):
 
     def __init__(self) -> None:
         self.__parser = HubParser()
-        self.__seen = set()
+        self.__seen: set[tuple[int, int]] = set()
 
     def create(self, line: str) -> Hub:
         _type, name, x, y, metadata = self.__parser.parse(line)
@@ -32,13 +33,14 @@ class HubFactory(ZoneFactory):
             return Hub(name, x, y, metadata)
         if _type == "end_hub":
             return EndHub(name, x, y, metadata)
+        raise HubParsingError(line=line)
 
 
 class ConnectionFactory:
 
     def __init__(self) -> None:
         self.__parser = ConnectionParser()
-        self.__seen = set()
+        self.__seen: set[frozenset[str]] = set()
 
     def create(self, line: str, zones: Dict[str, Zone]) -> None:
         zone_from, zone_to, max_link_capacity = self.__parser.parse(line)

@@ -16,15 +16,21 @@ class HubParser(ZoneParser):
             line: str, metadata_str: str
         ) -> Dict[str, HubMetaData]:
             if not HubRegex.HUB_METADATA.match(metadata_str):
-                raise HubMetaDataParsingError(line=line, metadata=metadata_str)
+                raise HubMetaDataParsingError(
+                    line=line,
+                    metadata=metadata_str,
+                )
 
-            metadata = dict()
+            metadata: Dict[str, HubMetaData] = dict()
             remaining = metadata_str.strip()
 
             while remaining:
                 match = HubRegex.PAIRS_KV.match(remaining)
                 if not match:
-                    raise HubMetaDataParsingError(line=line, metadata=metadata_str)
+                    raise HubMetaDataParsingError(
+                        line=line,
+                        metadata=metadata_str,
+                    )
 
                 key = match.group("key").strip()
                 value = match.group("value").strip()
@@ -34,18 +40,36 @@ class HubParser(ZoneParser):
                     try:
                         metadata[key] = ZoneType(value)
                     except ValueError:
-                        raise HubMetaDataParsingError(line=line, metadata=metadata_str)
+                        raise HubMetaDataParsingError(
+                            line=line,
+                            metadata=metadata_str,
+                        )
                 elif key == "color":
                     if not value.isalpha():
-                        raise HubMetaDataParsingError(line=line, metadata=metadata_str)
+                        raise HubMetaDataParsingError(
+                            line=line,
+                            metadata=metadata_str,
+                        )
                     metadata[key] = value
                 elif key == "max_drones":
                     try:
-                        metadata[key] = int(value)
+                        max_drones = int(value)
+                        if max_drones <= 0:
+                            raise HubMetaDataParsingError(
+                                line=line,
+                                metadata=metadata_str,
+                            )
+                        metadata[key] = max_drones
                     except ValueError:
-                        raise HubMetaDataParsingError(line=line, metadata=metadata_str)
+                        raise HubMetaDataParsingError(
+                            line=line,
+                            metadata=metadata_str,
+                        )
                 else:
-                    raise HubMetaDataParsingError(line=line, metadata=metadata_str)
+                    raise HubMetaDataParsingError(
+                        line=line,
+                        metadata=metadata_str,
+                    )
 
             return metadata
 
@@ -74,6 +98,7 @@ class HubParser(ZoneParser):
 
         metadata_str = match.group("metadata")
 
+        metadata: Dict[str, HubMetaData]
         if metadata_str is None:
             metadata = {
                 "zone": ZoneType.NORMAL,
