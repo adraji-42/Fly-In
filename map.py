@@ -31,19 +31,21 @@ class MapParser:
             match = MapRegex.NB_DRONS.match(line)
 
             if not match:
-                raise MapParsingError()
+                raise MapParsingError(line=line, line_number=n)
 
             if match.group('key').lower() != 'nb_drones':
-                raise MapParsingError()
+                raise MapParsingError(line=line, line_number=n)
 
             try:
                 nb_drones = int(match.group('value'))
                 if nb_drones < 0:
-                    raise MapParsingError()
+                    raise MapParsingError(line=line, line_number=n)
                 elif nb_drones == 0:
-                    raise MapParsingError()
-            except ValueError:
-                raise MapParsingError()
+                    raise MapParsingError(line=line, line_number=n)
+            except ValueError as error:
+                raise MapParsingError(
+                    line=line, line_number=n, original=error
+                ) from error
 
             break
 
@@ -60,29 +62,33 @@ class MapParser:
             if line.lstrip().lower().startswith("connection"):
                 try:
                     self.c_factory.create(line, all_hubs)
-                except ConnectionError:
-                    raise MapParsingError()
+                except ConnectionError as error:
+                    raise MapParsingError(
+                        line=line, line_number=n, original=error
+                    ) from error
             else:
                 try:
                     hub = self.h_factory.create(line)
 
                     if hub.name in all_hubs:
-                        raise MapParsingError()
+                        raise MapParsingError(line=line, line_number=n)
 
                     if isinstance(hub, StartHub):
                         if start_hub is not None:
-                            raise MapParsingError()
+                            raise MapParsingError(line=line, line_number=n)
                         start_hub = hub
                     elif isinstance(hub, EndHub):
                         if end_hub is not None:
-                            raise MapParsingError()
+                            raise MapParsingError(line=line, line_number=n)
                         end_hub = hub
                     else:
                         hubs[hub.name] = hub
 
                     all_hubs[hub.name] = hub
-                except HubError:
-                    raise MapParsingError()
+                except HubError as error:
+                    raise MapParsingError(
+                        line=line, line_number=n, original=error
+                    ) from error
 
         if not start_hub:
             raise MapParsingError()

@@ -22,7 +22,7 @@ class HubFactory(ZoneFactory):
         _type, name, x, y, metadata = self.__parser.parse(line)
 
         if (x, y) in self.__seen:
-            raise HubParsingError()
+            raise HubParsingError(line=line)
 
         self.__seen.add((x, y))
 
@@ -44,16 +44,16 @@ class ConnectionFactory:
         zone_from, zone_to, max_link_capacity = self.__parser.parse(line)
 
         if zone_from == zone_to:
-            raise ConnectionParsingError()
+            raise ConnectionParsingError(line=line)
 
         if zone_from not in zones:
-            raise ConnectionParsingError()
+            raise ConnectionParsingError(line=line)
         if zone_to not in zones:
-            raise ConnectionParsingError()
+            raise ConnectionParsingError(line=line)
 
         pair = frozenset({zone_from, zone_to})
         if pair in self.__seen:
-            raise ConnectionParsingError()
+            raise ConnectionParsingError(line=line)
         self.__seen.add(pair)
 
         zones[zone_from].connect(Connection(zone_to, max_link_capacity))

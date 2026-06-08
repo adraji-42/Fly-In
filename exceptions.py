@@ -2,6 +2,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from re import Pattern, compile
 from typing import Callable, Optional, Tuple
+from mytyping import ZoneType
+from regex import ConnectionRegex, MapRegex
 
 
 class Color(StrEnum):
@@ -93,7 +95,7 @@ class ParsingProblem:
 
 class HubMetadataProblemLocator:
     valid_keys = {"zone", "color", "max_drones"}
-    valid_zones = {"normal", "blocked", "restricted", "priority"}
+    valid_zones = {z_type.value for z_type in ZoneType}
 
     def __init__(self, metadata: str) -> None:
         self.metadata = metadata or ""
@@ -229,9 +231,7 @@ class HubMetadataProblemLocator:
 
 
 class ConnectionMetadataProblemLocator:
-    metadata_regex: Pattern = compile(
-        r"^\s*(?P<key>[^\s=]+)\s*=\s*(?P<value>\S+)\s*$"
-    )
+    metadata_regex: Pattern = ConnectionRegex.CONNECTION_METADATA
 
     def __init__(self, metadata: str) -> None:
         self.metadata = metadata or ""
@@ -337,9 +337,7 @@ class ConnectionMetadataProblemLocator:
 
 
 class MapLineProblemLocator:
-    drones_regex: Pattern = compile(
-        r"^\s*(?P<key>[^\s:]+)\s*:\s*(?P<value>\S+)\s*$"
-    )
+    drones_regex: Pattern = MapRegex.NB_DRONS
 
     def __init__(self, line: str) -> None:
         self.line = line or ""
