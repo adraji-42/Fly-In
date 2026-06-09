@@ -1,3 +1,6 @@
+from hub import Hub
+from typing import Optional
+from mytyping import ZoneType
 from mytyping import ConnectionAttribut
 from regex import ConnectionRegex, ZoneRegex
 from exceptions import (
@@ -69,21 +72,48 @@ class ConnectionParser:
         return zone1, zone2, max_link_capacity
 
 
-class Connection:
-    def __init__(
-        self, zone_to: str, max_link_capacity: int = 1
-    ) -> None:
-        self.__zone_to = zone_to
-        self.__max_link_capacity = max_link_capacity
+class StopPoint:
+    stop_point_capacity: int = 1
+
+    def __init__(self) -> None:
+        self.__nb_drones_in_stop_point: int = 0
+
+    def stoped(self) -> None:
+        self.__nb_drones_in_stop_point += 1
 
     @property
-    def zone_to(self) -> str:
-        return self.__zone_to
+    def can_stoped(self) -> bool:
+        return self.__nb_drones_in_stop_point < self.stop_point_capacity
+
+
+class Connection:
+    def __init__(
+        self, hub_to: Hub, max_link_capacity: int = 1
+    ) -> None:
+        self.__hub_to: Hub = hub_to
+        self.__max_link_capacity: int = max_link_capacity
+        self.__nb_drones_passed: int = 0
+        self.__stop_point: Optional[StopPoint] = (
+            StopPoint() if hub_to.type is ZoneType.RESTRICTED else None
+        )
+
+    @property
+    def hub_to(self) -> Hub:
+        return self.__hub_to
 
     @property
     def max_link_capacity(self) -> int:
         return self.__max_link_capacity
 
+    @property
+    def can_crossing(self) -> bool:
+        return (
+            self.__nb_drones_passed < self.__max_link_capacity
+            and (
+                self.__stop_point is None or self.__stop_point.can_stoped
+            )
+        )
+
     def __str__(self) -> str:
-        return f"Connection to {self.zone_to} " \
+        return f"Connection to {self.hub_to} " \
                f"with max link capacity {self.max_link_capacity}"

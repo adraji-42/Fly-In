@@ -58,4 +58,4 @@ class ConnectionFactory:
             raise ConnectionParsingError(line=line)
         self.__seen.add(pair)
 
-        zones[zone_from].connect(Connection(zone_to, max_link_capacity))
+        zones[zone_from].connect(Connection(zones[zone_to], max_link_capacity))
