@@ -19,7 +19,7 @@ class HubFactory(ZoneFactory):
         self.__parser = HubParser()
         self.__seen: set[tuple[int, int]] = set()
 
-    def create(self, line: str) -> Hub:
+    def create(self, line: str, nb_drones: int) -> Hub:
         _type, name, x, y, metadata = self.__parser.parse(line)
 
         if (x, y) in self.__seen:
@@ -28,11 +28,11 @@ class HubFactory(ZoneFactory):
         self.__seen.add((x, y))
 
         if _type == "start_hub":
-            return StartHub(name, x, y, metadata)
+            return StartHub(name, x, y, nb_drones, metadata)
         if _type == "hub":
             return Hub(name, x, y, metadata)
         if _type == "end_hub":
-            return EndHub(name, x, y, metadata)
+            return EndHub(name, x, y, nb_drones, metadata)
         raise HubParsingError(line=line)
 
 

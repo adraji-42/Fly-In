@@ -1,7 +1,7 @@
 from regex import MapRegex
+from typing import Dict, Optional
 from mytyping import MapAttributes
 from hub import StartHub, Hub, EndHub
-from typing import Dict, Optional
 from factorys import HubFactory, ConnectionFactory
 from exceptions import MapParsingError, ConnectionError, HubError
 
@@ -68,7 +68,7 @@ class MapParser:
                     ) from error
             else:
                 try:
-                    hub = self.h_factory.create(line)
+                    hub = self.h_factory.create(line, nb_drones)
 
                     if hub.name in all_hubs:
                         raise MapParsingError(line=line, line_number=n)

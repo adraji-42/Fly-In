@@ -123,6 +123,7 @@ class Hub(Zone):
         self.__zone = metadata.get("zone", ZoneType.NORMAL)
         self.__color = metadata.get("color", "none")
         self.__max_drones = metadata.get("max_drones", 1)
+        self.connections
 
     @property
     def zone(self) -> ZoneType:
@@ -143,8 +144,22 @@ class Hub(Zone):
 
 
 class StartHub(Hub):
-    ...
+    def __init__(
+        self, name: str, x: int, y: int,
+        nb_drones: int, metadata: Dict[str, HubMetaData]
+    ) -> None:
+        metadata["max_drones"] = max(
+            metadata.get("max_drones", nb_drones), nb_drones
+        )
+        super().__init__(name, x, y, metadata)
 
 
 class EndHub(Hub):
-    ...
+    def __init__(
+        self, name: str, x: int, y: int,
+        nb_drones: int, metadata: Dict[str, HubMetaData]
+    ) -> None:
+        metadata["max_drones"] = max(
+            metadata.get("max_drones", nb_drones), nb_drones
+        )
+        super().__init__(name, x, y, metadata)
