@@ -59,3 +59,4 @@ class ConnectionFactory:
         self.__seen.add(pair)
 
         zones[zone_from].connect(Connection(zone_to, max_link_capacity))
+        zones[zone_to].connect(Connection(zone_from, max_link_capacity))

@@ -1,22 +1,14 @@
 from map import Map
+from simulation_engine import SimulationEngine
 from sys import argv
 
 
 def main() -> None:
-    map = Map(argv[1])
-    print(f"nb_drones: {map.nb_drones}")
-    print(f"\nstart_hub: {map.start_hub}")
-    for connection in map.start_hub.connections:
-        print(f"\t{map.start_hub.name} {connection}")
+    fly_map = Map(argv[1])
+    engine = SimulationEngine(fly_map)
 
-    for hub in map.hubs.values():
-        print(f"\nHub: {hub}")
-        for connection in hub.connections:
-            print(f"\t{hub.name} {connection}")
-
-    print(f"\nend_hub: {map.end_hub}")
-    for connection in map.end_hub.connections:
-        print(f"\t{map.end_hub.name} {connection}")
+    for turn in engine.run():
+        print(" ".join(turn))
 
 
 if __name__ == "__main__":
