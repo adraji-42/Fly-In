@@ -123,7 +123,7 @@ class Hub(Zone):
         self.__type = metadata.get("zone", ZoneType.NORMAL)
         self.__color = metadata.get("color", "none")
         self.__max_drones = metadata.get("max_drones", 1)
-        self._nb_drones_currently = 0
+        self._nb_drones_currently: int = 0
 
     @property
     def type(self) -> ZoneType:
@@ -141,14 +141,14 @@ class Hub(Zone):
     def can_land(self) -> bool:
         return (
             self.type != ZoneType.BLOCKED
-            and self.__nb_drones_currently < self.max_drones
+            and self._nb_drones_currently < self.max_drones
         )
 
     def land(self) -> None:
-        self.__nb_drones_currently += 1
+        self._nb_drones_currently += 1
 
     def leaving(self) -> None:
-           self.__nb_drones_currently -= 1
+        self._nb_drones_currently -= 1
 
     def __str__(self):
         return f"Hub(name={self.name}, x={self.x}, y={self.y}, " \
