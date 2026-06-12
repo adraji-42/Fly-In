@@ -20,12 +20,12 @@ class Drone:
 
     @path.setter
     def path(self, path: Path) -> None:
-
         self.__path = path
         hubs = path.hubs
         try:
             start_index = next(
-                i for i, h in enumerate(hubs) if h is self.__current_hub
+                i for i, h in enumerate(hubs)
+                if h is self.__current_hub
             )
         except StopIteration:
             start_index = 0
@@ -48,11 +48,13 @@ class Drone:
         return self.__current_hub is last
 
     def step(self) -> Optional[str]:
-
         if self.__next_hub is None:
             return None
 
         dest = self.__next_hub
+
+        if not dest.can_land:
+            return None
 
         self.__current_hub.leaving()
         dest.land()
@@ -64,6 +66,7 @@ class Drone:
 
     def __repr__(self) -> str:
         return (
-            f"Drone(id={self._id}, hub={self.__current_hub.name}, "
+            f"Drone(id={self._id}, "
+            f"hub={self.__current_hub.name}, "
             f"finished={self.finished})"
         )

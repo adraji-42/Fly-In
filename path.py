@@ -5,9 +5,6 @@ from mytyping import ZoneType
 from typing import List, Optional, Tuple
 
 
-_COST_THRESHOLD_FACTOR: int = 2
-
-
 class PathFinder:
 
     @staticmethod
@@ -17,7 +14,7 @@ class PathFinder:
         return 1
 
     @classmethod
-    def find_paths(cls, start_hub: Hub) -> List[Path]:
+    def find_paths(cls, start_hub: Hub, nb_drones: int) -> List[Path]:
 
         paths: List[Path] = []
         shortest_cost: Optional[int] = None
@@ -29,7 +26,7 @@ class PathFinder:
             current, path, cost = queue.pop(0)
 
             if shortest_cost is not None:
-                if cost > shortest_cost * _COST_THRESHOLD_FACTOR:
+                if cost - shortest_cost >= nb_drones:
                     continue
 
             if isinstance(current, EndHub):
@@ -53,7 +50,7 @@ class PathFinder:
                 next_cost = cost + cls.__hub_cost(neighbour.type)
 
                 if shortest_cost is not None:
-                    if next_cost > shortest_cost * _COST_THRESHOLD_FACTOR:
+                    if cost - shortest_cost >= nb_drones:
                         continue
 
                 queue.append((neighbour, path + [neighbour], next_cost))
@@ -98,6 +95,25 @@ class Path:
     def release_drone(self) -> None:
         if self.__drone_count > 0:
             self.__drone_count -= 1
+
+    def calculate_arrival_turn(self, start_turn: int) -> int:
+        current_turn = start_turn
+
+        for hub in self.__hubs[1:]:
+            current_turn += 1
+            while not hub.is_available_at(current_turn):
+                current_turn += 1
+            hub.reserve_at(current_turn)
+
+        return current_turn
+
+    def predict_arrival_turn(self, start_turn: int) -> int:
+        current_turn = start_turn
+        for hub in self.__hubs[1:]:
+            current_turn += 1
+            while not hub.is_available_at(current_turn):
+                current_turn += 1
+        return current_turn
 
     def __repr__(self) -> str:
         names = " -> ".join(h.name for h in self.__hubs)

@@ -21,12 +21,11 @@ class DroneScheduler:
         )
 
     def assign(self, drone: Drone) -> Path:
-
         best: Path = self.__paths[0]
         for path in self.__paths[1:]:
-            if path.actual_cost < best.actual_cost:
+            if path.predict_arrival_turn(0) < best.predict_arrival_turn(0):
                 best = path
-        best.assign_drone()
+        best.calculate_arrival_turn(0)
         drone.path = best
         return best
 
@@ -38,12 +37,13 @@ class DroneScheduler:
 class SimulationEngine:
 
     def __init__(self, fly_map: Map) -> None:
+        self.__map: Map = fly_map
         self.__drones: List[Drone] = [
             Drone(index, fly_map.start_hub)
             for index in range(1, fly_map.nb_drones + 1)
         ]
 
-        raw_paths = PathFinder.find_paths(fly_map.start_hub)
+        raw_paths = PathFinder.find_paths(fly_map.start_hub, fly_map.nb_drones)
         self.__scheduler: DroneScheduler = DroneScheduler(raw_paths)
 
         for drone in self.__drones:

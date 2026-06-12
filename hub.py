@@ -123,6 +123,7 @@ class Hub(Zone):
         self.__type = metadata.get("zone", ZoneType.NORMAL)
         self.__color = metadata.get("color", "none")
         self.__max_drones = metadata.get("max_drones", 1)
+        self.reservations: Dict[int, int] = {}
         self._nb_drones_currently: int = 0
 
     @property
@@ -143,6 +144,12 @@ class Hub(Zone):
             self.type != ZoneType.BLOCKED
             and self._nb_drones_currently < self.max_drones
         )
+
+    def is_available_at(self, turn: int) -> bool:
+        return self.reservations.get(turn, 0) < self.max_drones
+
+    def reserve_at(self, turn: int) -> None:
+        self.reservations[turn] = self.reservations.get(turn, 0) + 1
 
     def land(self) -> None:
         self._nb_drones_currently += 1
