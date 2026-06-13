@@ -7,7 +7,7 @@ from exceptions import MapParsingError, ConnectionError, HubError
 
 
 class MapParser:
-    def __init__(self, map_path):
+    def __init__(self, map_path: str) -> None:
         with open(map_path, 'r') as file:
             self.__content = file.readlines()
         self.h_factory = HubFactory()

@@ -3,7 +3,7 @@ from enum import StrEnum
 from mytyping import ZoneType
 from dataclasses import dataclass
 from regex import ConnectionRegex, MapRegex
-from typing import Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, cast
 
 
 class Color(StrEnum):
@@ -30,12 +30,12 @@ class TextSpan:
         return self.start is not None and self.end is not None
 
     def shifted(self, offset: Optional[int]) -> "TextSpan":
-        if offset is None or not self.is_known:
+        if offset is None or self.start is None or self.end is None:
             return TextSpan.unknown()
         return TextSpan(self.start + offset, self.end + offset)
 
     def normalized_for(self, text: str) -> "TextSpan":
-        if not self.is_known:
+        if self.start is None or self.end is None:
             return TextSpan.whole(text)
         start = max(0, min(self.start, len(text)))
         end = max(start + 1, min(self.end, len(text))) if text else 0
@@ -435,10 +435,11 @@ class LineHighlighter:
         if metadata_span.is_known:
             metadata = self.context.metadata or ""
             highlighted_metadata = self.highlighted_metadata(problem)
+            start = cast(int, metadata_span.start)
             return (
-                f"{self.context.line[:metadata_span.start]}"
+                f"{self.context.line[:start]}"
                 f"{highlighted_metadata}"
-                f"{self.context.line[metadata_span.start + len(metadata):]}"
+                f"{self.context.line[start + len(metadata):]}"
             )
 
         if self.context.metadata == "" and "[]" in self.context.line:
@@ -474,8 +475,9 @@ class MetadataMessage:
         self.line_span = line_span
 
     def build(self) -> str:
+        start = cast(int, self.line_span.start)
         location = (
-            f"column {self.line_span.start + 1}"
+            f"column {start + 1}"
             if self.line_span.is_known
             else (
                 "the metadata section; the exact column could not be "
@@ -609,7 +611,7 @@ class MapParsingError(MapError):
         original: Optional[BaseException] = None,
         line: Optional[str] = None,
         line_number: Optional[int] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         if message is None and isinstance(original, MapError):
             context = SourceContext(line=line, line_number=line_number)
@@ -623,8 +625,9 @@ class MapParsingError(MapError):
                 line,
                 problem.span if problem.exact else TextSpan.whole(line),
             )
+            start = cast(int, problem.span.start)
             location = (
-                f"line {line_number}, column {problem.span.start + 1}"
+                f"line {line_number}, column {start + 1}"
                 if line_number is not None and problem.exact
                 else f"line {line_number}; "
                 "the exact column could not be determined"
@@ -678,7 +681,7 @@ class HubParsingError(HubError, MapParsingError):
         message: Optional[str] = None,
         *,
         line: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         if message is None and line is not None:
             highlighted_line = TextHighlighter().highlight(
@@ -708,7 +711,7 @@ class HubMetaDataParsingError(HubParsingError):
         *,
         line: Optional[str] = None,
         metadata: str = "",
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         context = SourceContext(line=line, metadata=metadata)
         problem = HubMetadataProblemLocator(metadata).locate()
@@ -758,7 +761,7 @@ class ConnectionParsingError(ConnectionError, MapParsingError):
         message: Optional[str] = None,
         *,
         line: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         if message is None and line is not None:
             highlighted_line = TextHighlighter().highlight(
@@ -787,7 +790,7 @@ class ConnectionMetaDataParsingError(ConnectionParsingError):
         *,
         line: Optional[str] = None,
         metadata: str = "",
-        **kwargs,
+        **kwargs: Any,
     ) -> None:
         context = SourceContext(line=line, metadata=metadata)
         problem = ConnectionMetadataProblemLocator(metadata).locate()

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, cast
 from regex import HubRegex
 from zone import Zone, ZoneParser
 from mytyping import ZoneType, HubAttribut, HubMetaData
@@ -120,11 +120,9 @@ class Hub(Zone):
         self, name: str, x: int, y: int, metadata: Dict[str, HubMetaData]
     ) -> None:
         super().__init__(name, x, y)
-        self.__type = metadata.get("zone", ZoneType.NORMAL)
-        self.__color = metadata.get("color", "none")
-        self.__max_drones = metadata.get("max_drones", 1)
-        self.reservations: Dict[int, int] = {}
-        self._nb_drones_currently: int = 0
+        self.__type = cast(ZoneType, metadata.get("zone", ZoneType.NORMAL))
+        self.__color = cast(str, metadata.get("color", "none"))
+        self.__max_drones = cast(int, metadata.get("max_drones", 1))
 
     @property
     def type(self) -> ZoneType:
@@ -137,30 +135,6 @@ class Hub(Zone):
     @property
     def max_drones(self) -> int:
         return self.__max_drones
-
-    @property
-    def can_land(self) -> bool:
-        return (
-            self.type != ZoneType.BLOCKED
-            and self._nb_drones_currently < self.max_drones
-        )
-
-    def is_available_at(self, turn: int) -> bool:
-        return self.reservations.get(turn, 0) < self.max_drones
-
-    def reserve_at(self, turn: int) -> None:
-        self.reservations[turn] = self.reservations.get(turn, 0) + 1
-
-    def land(self) -> None:
-        self._nb_drones_currently += 1
-
-    def leaving(self) -> None:
-        self._nb_drones_currently -= 1
-
-    def __str__(self):
-        return f"Hub(name={self.name}, x={self.x}, y={self.y}, " \
-               f"zone={self.type}, color={self.color}, " \
-               f"max_drones={self.max_drones})"
 
 
 class StartHub(Hub):

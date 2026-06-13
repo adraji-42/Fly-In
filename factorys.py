@@ -1,19 +1,10 @@
-from zone import Zone
 from typing import Dict
-from abc import ABC, abstractmethod
 from hub import StartHub, Hub, EndHub, HubParser
 from connection import Connection, ConnectionParser
 from exceptions import HubParsingError, ConnectionParsingError
 
 
-class ZoneFactory(ABC):
-
-    @abstractmethod
-    def create(self, line: str) -> Zone:
-        pass
-
-
-class HubFactory(ZoneFactory):
+class HubFactory:
 
     def __init__(self) -> None:
         self.__parser = HubParser()
@@ -42,7 +33,7 @@ class ConnectionFactory:
         self.__parser = ConnectionParser()
         self.__seen: set[frozenset[str]] = set()
 
-    def create(self, line: str, zones: Dict[str, Zone]) -> None:
+    def create(self, line: str, zones: Dict[str, Hub]) -> None:
         zone_from, zone_to, max_link_capacity = self.__parser.parse(line)
 
         if zone_from == zone_to:
@@ -59,3 +50,4 @@ class ConnectionFactory:
         self.__seen.add(pair)
 
         zones[zone_from].connect(Connection(zones[zone_to], max_link_capacity))
+        zones[zone_to].connect(Connection(zones[zone_from], max_link_capacity))

@@ -6,8 +6,8 @@ from engine import SimulationEngine
 def main() -> None:
     map = Map(argv[1])
     engine = SimulationEngine(map)
-    for n, turn in enumerate(engine.solution_generator(), 1):
-        print(f"{n}: {turn}")
+    for turn in engine.solution_generator():
+        print(turn)
 
 
 if __name__ == "__main__":
