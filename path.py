@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+from hub import EndHub, Hub
+from itertools import count
+from mytyping import ZoneType
+from connection import Connection
 from dataclasses import dataclass
 from heapq import heappop, heappush
-from itertools import count
-from typing import List, Tuple
-
-from connection import Connection
-from hub import EndHub, Hub
-from mytyping import ZoneType
+from typing import Set, List, Dict, Tuple
 
 
 @dataclass(frozen=True)
@@ -44,7 +43,6 @@ class Path:
                 "A Path must contain at least a start and an end hub."
             )
         self.__hubs = hubs
-        self.__connections = connections
         self.__base_cost = base_cost
         self.__steps = [
             PathStep(hubs[index], connection, hubs[index + 1])
@@ -77,64 +75,72 @@ class Path:
 
 
 class PathFinder:
+
     @staticmethod
     def __hub_cost(zone_type: ZoneType) -> int:
         if zone_type is ZoneType.RESTRICTED:
             return 2
         return 1
 
-    @staticmethod
-    def __hub_priority(zone_type: ZoneType) -> int:
-        if zone_type is ZoneType.PRIORITY:
-            return 0
-        if zone_type is ZoneType.NORMAL:
-            return 1
-        return 2
-
     @classmethod
     def find_paths(cls, start_hub: Hub, nb_drones: int) -> List[Path]:
         paths: List[Path] = []
         unique = count()
-        queue: List[
-            Tuple[int, int, int, int, Hub, List[Hub], List[Connection]]
-        ] = []
-        heappush(queue, (0, 0, 0, next(unique), start_hub, [start_hub], []))
+        buckets: Dict[
+            int,
+            List[Tuple[int, int, Hub, List[Hub], List[Connection]]],
+        ] = {}
 
-        while queue and len(paths) < nb_drones:
-            cost, priority, length, _, current, hubs, connections = heappop(
-                queue
-            )
+        buckets[0] = []
+        heappush(
+            buckets[0],
+            (1, next(unique), start_hub, [start_hub], [])
+        )
+        current_cost = 0
 
-            if isinstance(current, EndHub):
-                paths.append(Path(hubs, connections, cost))
+        while buckets and len(paths) < nb_drones:
+            if current_cost not in buckets:
+                current_cost = min(buckets)
                 continue
 
-            visited = {hub.name for hub in hubs}
-            next_connections = sorted(
-                current.connections,
-                key=lambda item: (
-                    cls.__hub_cost(item.hub_to.type),
-                    cls.__hub_priority(item.hub_to.type),
-                    item.hub_to.name,
-                ),
+            priority, _, current, hubs, connections = heappop(
+                buckets[current_cost]
             )
 
-            for connection in next_connections:
+            if not buckets[current_cost]:
+                del buckets[current_cost]
+
+            if isinstance(current, EndHub):
+                paths.append(Path(hubs, connections, current_cost))
+                continue
+
+            visited: Set[str] = {hub.name for hub in hubs}
+
+            for connection in current.connections:
                 neighbour = connection.hub_to
                 if neighbour.type is ZoneType.BLOCKED:
                     continue
                 if neighbour.name in visited:
                     continue
-                next_cost = cost + cls.__hub_cost(neighbour.type)
-                next_priority = priority + cls.__hub_priority(
+
+                next_cost: int = current_cost + cls.__hub_cost(
                     neighbour.type
                 )
+
+                if current == start_hub:
+                    next_priority = (
+                        0 if neighbour.type is ZoneType.PRIORITY else 1
+                    )
+                else:
+                    next_priority = priority
+
+                if next_cost not in buckets:
+                    buckets[next_cost] = []
+
                 heappush(
-                    queue,
+                    buckets[next_cost],
                     (
-                        next_cost,
                         next_priority,
-                        length + 1,
                         next(unique),
                         neighbour,
                         hubs + [neighbour],
@@ -142,11 +148,4 @@ class PathFinder:
                     ),
                 )
 
-        return sorted(
-            paths,
-            key=lambda path: (
-                path.base_cost,
-                path.priority_score,
-                len(path.hubs),
-            ),
-        )
+        return paths

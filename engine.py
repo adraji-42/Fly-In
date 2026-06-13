@@ -10,6 +10,7 @@ from hub import Hub, StartHub
 from map import Map
 from path import Path, PathFinder, PathStep
 
+
 State = Tuple[int, int]
 Previous = Dict[State, Tuple[State, "ScheduleAction"]]
 TurnQueue = List[Tuple[int, int, int]]
@@ -274,7 +275,6 @@ class DroneScheduler:
 
 class SimulationEngine:
     def __init__(self, fly_map: Map) -> None:
-        self.__map = fly_map
         self.__drones = [
             Drone(index, fly_map.start_hub)
             for index in range(1, fly_map.nb_drones + 1)
