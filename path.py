@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from hub import EndHub, Hub
 from itertools import count
-from mytyping import ZoneType
+from mytypes import ZoneType
 from connection import Connection
 from dataclasses import dataclass
 from heapq import heappop, heappush
@@ -27,8 +27,7 @@ class PathStep:
 
     @property
     def edge_key(self) -> Tuple[str, str]:
-        names = sorted((self.source.name, self.destination.name))
-        return names[0], names[1]
+        return (self.source.name, self.destination.name)
 
 
 class Path:

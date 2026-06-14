@@ -1,6 +1,6 @@
 from regex import MapRegex
 from typing import Dict, Optional
-from mytyping import MapAttributes
+from mytypes import MapAttributes
 from hub import StartHub, Hub, EndHub
 from factorys import HubFactory, ConnectionFactory
 from exceptions import MapParsingError, ConnectionError, HubError

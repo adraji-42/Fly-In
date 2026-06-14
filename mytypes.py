@@ -13,6 +13,6 @@ class ZoneType(StrEnum):
 
 
 HubMetaData = Union[ZoneType, str, int]
-HubAttribut = Tuple[str, str, int, int, Dict[str, HubMetaData]]
-ConnectionAttribut = Tuple[str, str, int]
+HubAttribute = Tuple[str, str, int, int, Dict[str, HubMetaData]]
+ConnectionAttribute = Tuple[str, str, int]
 MapAttributes = Tuple[int, "StartHub", Dict[str, "Hub"], "EndHub"]

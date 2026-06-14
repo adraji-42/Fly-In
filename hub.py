@@ -1,7 +1,7 @@
 from typing import Dict, cast
 from regex import HubRegex
 from zone import Zone, ZoneParser
-from mytyping import ZoneType, HubAttribut, HubMetaData
+from mytypes import ZoneType, HubAttribute, HubMetaData
 from exceptions import (
     HubParsingError, HubMetaDataParsingError
 )
@@ -73,7 +73,7 @@ class HubParser(ZoneParser):
 
             return metadata
 
-    def parse(self, line: str) -> HubAttribut:
+    def parse(self, line: str) -> HubAttribute:
         match = HubRegex.HUB_LINE.match(line)
 
         if not match:

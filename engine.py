@@ -1,14 +1,13 @@
 from __future__ import annotations
 
+from map import Map
+from itertools import count
+from hub import Hub, StartHub
 from dataclasses import dataclass
 from heapq import heappop, heappush
-from itertools import count
-from typing import Dict, Generator, Iterator, List, Optional, Tuple
-
 from drone import Drone, MovementEvent
-from hub import Hub, StartHub
-from map import Map
 from path import Path, PathFinder, PathStep
+from typing import Dict, Generator, Iterator, List, Optional, Tuple
 
 
 State = Tuple[int, int]

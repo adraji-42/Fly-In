@@ -1,5 +1,5 @@
 from hub import Hub
-from mytyping import ConnectionAttribut
+from mytypes import ConnectionAttribute
 from regex import ConnectionRegex, ZoneRegex
 from exceptions import (
     ConnectionParsingError,
@@ -43,7 +43,7 @@ class ConnectionParser:
                     metadata=metadata_str,
                 )
 
-    def parse(self, line: str) -> ConnectionAttribut:
+    def parse(self, line: str) -> ConnectionAttribute:
         match = ConnectionRegex.CONNECTION_LINE.match(line)
 
         if not match:

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import List, Optional
-
 from hub import Hub
 from path import Path
+from dataclasses import dataclass
+from typing import List, Optional
 
 
 @dataclass(frozen=True)

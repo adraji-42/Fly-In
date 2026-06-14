@@ -1,6 +1,6 @@
 from re import Pattern
 from enum import StrEnum
-from mytyping import ZoneType
+from mytypes import ZoneType
 from dataclasses import dataclass
 from regex import ConnectionRegex, MapRegex
 from typing import Any, Callable, Optional, Tuple, cast
