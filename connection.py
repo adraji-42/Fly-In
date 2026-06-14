@@ -1,6 +1,6 @@
 from hub import Hub
 from mytypes import ConnectionAttribute
-from regex import ConnectionRegex, ZoneRegex
+from regex import ConnectionRegex
 from exceptions import (
     ConnectionParsingError,
     ConnectionMetaDataParsingError
@@ -50,9 +50,6 @@ class ConnectionParser:
             raise ConnectionParsingError(line=line)
 
         zone1, zone2 = match.group("zone1"), match.group("zone2")
-        if not ZoneRegex.ZONE_NAME.match(zone2):
-            raise ConnectionParsingError(line=line)
-
         max_link_capacity = 1
         metadata_str = match.group("metadata")
         if metadata_str is not None:

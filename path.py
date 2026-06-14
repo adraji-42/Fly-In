@@ -27,7 +27,8 @@ class PathStep:
 
     @property
     def edge_key(self) -> Tuple[str, str]:
-        return (self.source.name, self.destination.name)
+        names = sorted((self.source.name, self.destination.name))
+        return names[0], names[1]
 
 
 class Path:
@@ -37,10 +38,6 @@ class Path:
         connections: List[Connection],
         base_cost: int,
     ) -> None:
-        if len(hubs) < 2:
-            raise ValueError(
-                "A Path must contain at least a start and an end hub."
-            )
         self.__hubs = hubs
         self.__base_cost = base_cost
         self.__steps = [
@@ -59,10 +56,6 @@ class Path:
     @property
     def base_cost(self) -> int:
         return self.__base_cost
-
-    @property
-    def first_hub(self) -> Hub:
-        return self.__hubs[1]
 
     @property
     def priority_score(self) -> int:

@@ -1,27 +1,35 @@
 from __future__ import annotations
 
-from map import Map
-from itertools import count
-from hub import Hub, StartHub
 from dataclasses import dataclass
 from heapq import heappop, heappush
+from itertools import count
+from typing import Dict, Generator, Iterator, List, Optional, Tuple, TypeAlias
+
 from drone import Drone, MovementEvent
+from hub import Hub, StartHub
+from map import Map
 from path import Path, PathFinder, PathStep
-from typing import Dict, Generator, Iterator, List, Optional, Tuple
 
 
-State = Tuple[int, int]
-Previous = Dict[State, Tuple[State, "ScheduleAction"]]
-TurnQueue = List[Tuple[int, int, int]]
+State: TypeAlias = Tuple[int, int]
+TurnQueue: TypeAlias = List[Tuple[int, int, int]]
 
 
 @dataclass(frozen=True)
-class ScheduleAction:
-    kind: str
+class WaitAction:
     hub: Hub
     turn: int
-    step: Optional[PathStep] = None
-    arrival_turn: Optional[int] = None
+
+
+@dataclass(frozen=True)
+class MoveAction:
+    step: PathStep
+    departure_turn: int
+    arrival_turn: int
+
+
+ScheduleAction: TypeAlias = WaitAction | MoveAction
+Previous: TypeAlias = Dict[State, Tuple[State, ScheduleAction]]
 
 
 class ReservationTable:
@@ -83,16 +91,17 @@ class DronePlan:
 
     def commit(self, table: ReservationTable) -> None:
         for action in self.__actions:
-            if action.kind == "wait":
+            if isinstance(action, WaitAction):
                 table.reserve_hub(action.hub, action.turn)
                 continue
-            if action.step is None or action.arrival_turn is None:
-                continue
-            table.reserve_link(action.step, action.turn)
+            table.reserve_link(action.step, action.departure_turn)
             table.reserve_hub(action.step.destination, action.arrival_turn)
             if action.step.travel_time == 2:
                 self.__events.append(
-                    MovementEvent(action.turn, action.step.connection_name)
+                    MovementEvent(
+                        action.departure_turn,
+                        action.step.connection_name,
+                    )
                 )
                 self.__events.append(
                     MovementEvent(
@@ -194,7 +203,7 @@ class PathPlanner:
         best_times[next_state] = wait_turn
         previous[next_state] = (
             state,
-            ScheduleAction("wait", hub, wait_turn),
+            WaitAction(hub, wait_turn),
         )
         heappush(queue, (wait_turn, index, next(unique)))
 
@@ -224,13 +233,7 @@ class PathPlanner:
         best_times[next_state] = arrival_turn
         previous[next_state] = (
             state,
-            ScheduleAction(
-                "move",
-                step.source,
-                departure_turn,
-                step,
-                arrival_turn,
-            ),
+            MoveAction(step, departure_turn, arrival_turn),
         )
         heappush(queue, (arrival_turn, index + 1, next(unique)))
 
@@ -275,17 +278,13 @@ class DroneScheduler:
 class SimulationEngine:
     def __init__(self, fly_map: Map) -> None:
         self.__drones = [
-            Drone(index, fly_map.start_hub)
+            Drone(index)
             for index in range(1, fly_map.nb_drones + 1)
         ]
         paths = PathFinder.find_paths(fly_map.start_hub, fly_map.nb_drones)
         self.__scheduler = DroneScheduler(paths, fly_map.nb_drones)
         for drone in self.__drones:
             self.__scheduler.schedule(drone)
-
-    @property
-    def all_finished(self) -> bool:
-        return all(drone.finished for drone in self.__drones)
 
     def solution_generator(self) -> Generator[str, None, None]:
         events_by_turn: Dict[int, List[str]] = {}

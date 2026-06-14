@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from hub import Hub
-from path import Path
 from dataclasses import dataclass
 from typing import List, Optional
+
+from path import Path
 
 
 @dataclass(frozen=True)
@@ -13,9 +13,8 @@ class MovementEvent:
 
 
 class Drone:
-    def __init__(self, drone_id: int, hub: Hub) -> None:
+    def __init__(self, drone_id: int) -> None:
         self.__id = drone_id
-        self.__start_hub = hub
         self.__path: Optional[Path] = None
         self.__events: List[MovementEvent] = []
         self.__finished_turn: Optional[int] = None
@@ -23,10 +22,6 @@ class Drone:
     @property
     def id(self) -> int:
         return self.__id
-
-    @property
-    def start_hub(self) -> Hub:
-        return self.__start_hub
 
     @property
     def path(self) -> Optional[Path]:

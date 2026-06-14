@@ -18,13 +18,12 @@ class HubFactory:
 
         self.__seen.add((x, y))
 
-        if _type == "start_hub":
-            return StartHub(name, x, y, nb_drones, metadata)
-        if _type == "hub":
-            return Hub(name, x, y, metadata)
-        if _type == "end_hub":
-            return EndHub(name, x, y, nb_drones, metadata)
-        raise HubParsingError(line=line)
+        builders = {
+            "start_hub": lambda: StartHub(name, x, y, nb_drones, metadata),
+            "hub": lambda: Hub(name, x, y, metadata),
+            "end_hub": lambda: EndHub(name, x, y, nb_drones, metadata),
+        }
+        return builders[_type]()
 
 
 class ConnectionFactory:
@@ -50,3 +49,4 @@ class ConnectionFactory:
         self.__seen.add(pair)
 
         zones[zone_from].connect(Connection(zones[zone_to], max_link_capacity))
+        zones[zone_to].connect(Connection(zones[zone_from], max_link_capacity))

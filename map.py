@@ -1,5 +1,5 @@
 from regex import MapRegex
-from typing import Dict, Optional
+from typing import Dict, Iterator, Optional, Tuple
 from mytypes import MapAttributes
 from hub import StartHub, Hub, EndHub
 from factorys import HubFactory, ConnectionFactory
@@ -13,6 +13,12 @@ class MapParser:
         self.h_factory = HubFactory()
         self.c_factory = ConnectionFactory()
 
+    def __lines(self) -> Iterator[Tuple[int, str]]:
+        for line_number, line in enumerate(self.__content, 1):
+            line = line.split('#')[0].strip()
+            if line:
+                yield line_number, line
+
     def parse(self) -> MapAttributes:
         all_hubs: Dict[str, Hub] = dict()
         start_hub: Optional[StartHub] = None
@@ -20,14 +26,9 @@ class MapParser:
         end_hub: Optional[EndHub] = None
 
         nb_drones = None
+        lines = self.__lines()
 
-        for n, line in enumerate(self.__content, 1):
-            if '#' in line:
-                if not (line := line.split('#')[0].strip()):
-                    continue
-            elif not line.strip():
-                continue
-
+        for n, line in lines:
             match = MapRegex.NB_DRONS.match(line)
 
             if not match:
@@ -38,9 +39,7 @@ class MapParser:
 
             try:
                 nb_drones = int(match.group('value'))
-                if nb_drones < 0:
-                    raise MapParsingError(line=line, line_number=n)
-                elif nb_drones == 0:
+                if nb_drones <= 0:
                     raise MapParsingError(line=line, line_number=n)
             except ValueError as error:
                 raise MapParsingError(
@@ -52,13 +51,7 @@ class MapParser:
         if nb_drones is None:
             raise MapParsingError()
 
-        for n, line in enumerate(self.__content[n:], n + 1):
-            if '#' in line:
-                if not (line := line.split('#')[0].strip()):
-                    continue
-            elif not line.strip():
-                continue
-
+        for n, line in lines:
             if line.lstrip().lower().startswith("connection"):
                 try:
                     self.c_factory.create(line, all_hubs)
