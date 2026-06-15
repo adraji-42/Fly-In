@@ -34,7 +34,7 @@ class PathFinder:
         move_cost = connection.hub_to.cost
         wait_cost = max(
             connection.nearest_reservation(current_cost),
-            current.nearest_reservation(current_cost) - 1
+            current.nearest_reservation(current_cost) - move_cost
         ) - current_cost
         return current_cost + move_cost + wait_cost
 

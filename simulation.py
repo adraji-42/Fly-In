@@ -1,6 +1,6 @@
 from map import Map
 from typing import Dict, List
-from drone import DroneSheduler
+from drone import DroneScheduler
 
 
 class Simulation:
@@ -10,7 +10,7 @@ class Simulation:
     def run(self) -> None:
         turns_moves: Dict[int, List[str]] = {}
         for drone in self.__map.drones:
-            DroneSheduler().schedule(drone)
+            DroneScheduler.schedule(drone)
             for event in drone.events:
                 if event.time not in turns_moves:
                     turns_moves[event.time] = []

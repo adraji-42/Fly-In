@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import List
 from hub import Hub, HubType
+from exceptions import MapError
 from path import Path, PathFinder
 from dataclasses import dataclass
-from exceptions import MapError
 
 
 @dataclass(slots=True, frozen=True)
