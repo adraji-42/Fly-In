@@ -1,96 +1,59 @@
-from __future__ import annotations
-
 from hub import EndHub, Hub
 from itertools import count
-from mytypes import ZoneType
+from mytypes import HubType
 from connection import Connection
-from dataclasses import dataclass
 from heapq import heappop, heappush
-from typing import Set, List, Dict, Tuple
-
-
-@dataclass(frozen=True)
-class PathStep:
-    source: Hub
-    connection: Connection
-    destination: Hub
-
-    @property
-    def travel_time(self) -> int:
-        if self.destination.type is ZoneType.RESTRICTED:
-            return 2
-        return 1
-
-    @property
-    def connection_name(self) -> str:
-        return f"{self.source.name}-{self.destination.name}"
-
-    @property
-    def edge_key(self) -> Tuple[str, str]:
-        names = sorted((self.source.name, self.destination.name))
-        return names[0], names[1]
+from typing import Set, List, Dict, Tuple, Optional
 
 
 class Path:
     def __init__(
         self,
         hubs: List[Hub],
-        connections: List[Connection],
-        base_cost: int,
+        base_cost: int
     ) -> None:
         self.__hubs = hubs
         self.__base_cost = base_cost
-        self.__steps = [
-            PathStep(hubs[index], connection, hubs[index + 1])
-            for index, connection in enumerate(connections)
-        ]
 
     @property
     def hubs(self) -> List[Hub]:
         return self.__hubs
 
     @property
-    def steps(self) -> List[PathStep]:
-        return self.__steps
-
-    @property
     def base_cost(self) -> int:
         return self.__base_cost
 
-    @property
-    def priority_score(self) -> int:
-        return sum(hub.type is not ZoneType.PRIORITY for hub in self.__hubs)
-
-    def __repr__(self) -> str:
-        names = " -> ".join(hub.name for hub in self.__hubs)
-        return f"Path(base_cost={self.__base_cost}, hubs=[{names}])"
-
 
 class PathFinder:
-
     @staticmethod
-    def __hub_cost(zone_type: ZoneType) -> int:
-        if zone_type is ZoneType.RESTRICTED:
-            return 2
-        return 1
+    def __next_cost(
+        current_cost: int,
+        current: Hub,
+        connection: Connection
+    ) -> int:
+        move_cost = connection.hub_to.cost
+        wait_cost = max(
+            connection.nearest_reservation(current_cost),
+            current.nearest_reservation(current_cost) - 1
+        ) - current_cost
+        return current_cost + move_cost + wait_cost
 
     @classmethod
-    def find_paths(cls, start_hub: Hub, nb_drones: int) -> List[Path]:
-        paths: List[Path] = []
+    def find_path(cls, start_hub: Hub, time: int = 0) -> Optional[Path]:
         unique = count()
         buckets: Dict[
             int,
             List[Tuple[int, int, Hub, List[Hub], List[Connection]]],
         ] = {}
 
-        buckets[0] = []
+        buckets[time] = []
         heappush(
-            buckets[0],
+            buckets[time],
             (1, next(unique), start_hub, [start_hub], [])
         )
-        current_cost = 0
+        current_cost = time
 
-        while buckets and len(paths) < nb_drones:
+        while buckets:
             if current_cost not in buckets:
                 current_cost = min(buckets)
                 continue
@@ -103,32 +66,30 @@ class PathFinder:
                 del buckets[current_cost]
 
             if isinstance(current, EndHub):
-                paths.append(Path(hubs, connections, current_cost))
-                continue
+                return Path(hubs, current_cost)
 
             visited: Set[str] = {hub.name for hub in hubs}
 
-            for connection in current.connections:
+            for connection in current.connections.values():
                 neighbour = connection.hub_to
-                if neighbour.type is ZoneType.BLOCKED:
+                if neighbour.type is HubType.BLOCKED:
                     continue
                 if neighbour.name in visited:
                     continue
 
-                next_cost: int = current_cost + cls.__hub_cost(
-                    neighbour.type
+                next_cost: int = cls.__next_cost(
+                    current_cost, current, connection
                 )
 
                 if current == start_hub:
                     next_priority = (
-                        0 if neighbour.type is ZoneType.PRIORITY else 1
+                        0 if neighbour.type is HubType.PRIORITY else 1
                     )
                 else:
                     next_priority = priority
 
                 if next_cost not in buckets:
                     buckets[next_cost] = []
-
                 heappush(
                     buckets[next_cost],
                     (
@@ -140,4 +101,4 @@ class PathFinder:
                     ),
                 )
 
-        return paths
+        return None

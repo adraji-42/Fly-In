@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Set, TYPE_CHECKING
+from typing import Any, Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from connection import Connection
@@ -18,7 +18,7 @@ class Zone:
         self.__name = name
         self.__x = x
         self.__y = y
-        self.__connections: Set["Connection"] = set()
+        self.__connections: Dict[str, "Connection"] = {}
 
     @property
     def name(self) -> str:
@@ -33,8 +33,8 @@ class Zone:
         return self.__y
 
     @property
-    def connections(self) -> set["Connection"]:
+    def connections(self) -> Dict[str, "Connection"]:
         return self.__connections
 
     def connect(self, connection: "Connection") -> None:
-        self.__connections.add(connection)
+        self.__connections[connection.hub_to.name] = connection

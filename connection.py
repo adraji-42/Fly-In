@@ -1,4 +1,5 @@
 from hub import Hub
+from typing import Dict
 from mytypes import ConnectionAttribute
 from regex import ConnectionRegex
 from exceptions import (
@@ -69,10 +70,16 @@ class ConnectionParser:
 
 class Connection:
     def __init__(
-        self, hub_to: Hub, max_link_capacity: int = 1
+        self, hub_from: str, hub_to: Hub, max_link_capacity: int = 1
     ) -> None:
+        self.__hub_from: str = hub_from
         self.__hub_to: Hub = hub_to
         self.__max_link_capacity: int = max_link_capacity
+        self.__reservations: Dict[int, int] = {}
+
+    @property
+    def hub_from(self) -> str:
+        return self.__hub_from
 
     @property
     def hub_to(self) -> Hub:
@@ -81,3 +88,21 @@ class Connection:
     @property
     def max_link_capacity(self) -> int:
         return self.__max_link_capacity
+
+    def can_reserve(self, time: int) -> bool:
+        return self.__reservations.get(time, 0) < self.__max_link_capacity
+
+    def reserve(self, time: int) -> bool:
+        if not self.can_reserve(time):
+            return False
+        self.__reservations[time] = self.__reservations.get(time, 0) + 1
+        return True
+
+    def nearest_reservation(self, start_time: int) -> int:
+        time = start_time
+        while not self.can_reserve(time):
+            time += 1
+        return time
+
+    def __str__(self) -> str:
+        return f"{self.__hub_from}-{self.__hub_to}"

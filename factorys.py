@@ -33,20 +33,24 @@ class ConnectionFactory:
         self.__seen: set[frozenset[str]] = set()
 
     def create(self, line: str, zones: Dict[str, Hub]) -> None:
-        zone_from, zone_to, max_link_capacity = self.__parser.parse(line)
+        zone1, zone2, max_link_capacity = self.__parser.parse(line)
 
-        if zone_from == zone_to:
+        if zone1 == zone2:
             raise ConnectionParsingError(line=line)
 
-        if zone_from not in zones:
+        if zone1 not in zones:
             raise ConnectionParsingError(line=line)
-        if zone_to not in zones:
+        if zone2 not in zones:
             raise ConnectionParsingError(line=line)
 
-        pair = frozenset({zone_from, zone_to})
+        pair = frozenset({zone1, zone2})
         if pair in self.__seen:
             raise ConnectionParsingError(line=line)
         self.__seen.add(pair)
 
-        zones[zone_from].connect(Connection(zones[zone_to], max_link_capacity))
-        zones[zone_to].connect(Connection(zones[zone_from], max_link_capacity))
+        zones[zone1].connect(
+            Connection(zone1, zones[zone2], max_link_capacity)
+        )
+        zones[zone2].connect(
+            Connection(zone2, zones[zone1], max_link_capacity)
+        )

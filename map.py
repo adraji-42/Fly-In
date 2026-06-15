@@ -1,7 +1,8 @@
-from regex import MapRegex
-from typing import Dict, Iterator, Optional, Tuple
+from drone import Drone
+from regex import MapRegex  # type: ignore
 from mytypes import MapAttributes
 from hub import StartHub, Hub, EndHub
+from typing import Dict, List, Tuple, Iterator, Optional
 from factorys import HubFactory, ConnectionFactory
 from exceptions import MapParsingError, ConnectionError, HubError
 
@@ -93,10 +94,35 @@ class MapParser:
 
 class Map:
     def __init__(self, map_path: str):
-        self.nb_drones: int
-        self.start_hub: StartHub
-        self.hubs: Dict[str, Hub]
-        self.end_hub: EndHub
-        self.nb_drones, self.start_hub, self.hubs, self.end_hub = MapParser(
+        self.__nb_drones: int
+        self.__start_hub: StartHub
+        self.__hubs: Dict[str, Hub]
+        self.__end_hub: EndHub
+
+        self.__nb_drones, self.__start_hub, self.__hubs, self.__end_hub = MapParser(
             map_path
         ).parse()
+
+        self.__drones: List[Drone] = [
+            Drone(i, self.__start_hub) for i in range(1, self.__nb_drones + 1)
+        ]
+
+    @property
+    def nb_drones(self) -> int:
+        return self.__nb_drones
+
+    @property
+    def start_hub(self) -> StartHub:
+        return self.__start_hub
+
+    @property
+    def hubs(self) -> Dict[str, Hub]:
+        return self.__hubs
+
+    @property
+    def end_hub(self) -> EndHub:
+        return self.__end_hub
+
+    @property
+    def drones(self) -> List[Drone]:
+        return self.__drones

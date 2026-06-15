@@ -1,6 +1,6 @@
 from re import Pattern
 from enum import StrEnum
-from mytypes import ZoneType
+from mytypes import HubType
 from dataclasses import dataclass
 from regex import ConnectionRegex, MapRegex
 from typing import Any, Callable, Optional, Tuple, cast
@@ -95,7 +95,7 @@ class ParsingProblem:
 
 class HubMetadataProblemLocator:
     valid_keys = {"zone", "color", "max_drones"}
-    valid_zones = {z_type.value for z_type in ZoneType}
+    valid_zones = {z_type.value for z_type in HubType}
 
     def __init__(self, metadata: str) -> None:
         self.metadata = metadata or ""

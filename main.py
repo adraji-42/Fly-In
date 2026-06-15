@@ -1,13 +1,12 @@
 from map import Map
 from sys import argv
-from engine import SimulationEngine
+from simulation import Simulation
 
 
 def main() -> None:
     map = Map(argv[1])
-    engine = SimulationEngine(map)
-    for turn in engine.solution_generator():
-        print(turn)
+    engine = Simulation(map)
+    engine.run()
 
 
 if __name__ == "__main__":

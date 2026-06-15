@@ -1,7 +1,7 @@
-from typing import Dict, cast
 from regex import HubRegex
 from zone import Zone, ZoneParser
-from mytypes import ZoneType, HubAttribute, HubMetaData
+from typing import Dict, cast, Optional
+from mytypes import HubType, HubAttribute, HubMetaData
 from exceptions import (
     HubParsingError, HubMetaDataParsingError
 )
@@ -38,7 +38,7 @@ class HubParser(ZoneParser):
 
                 if key == "zone":
                     try:
-                        metadata[key] = ZoneType(value)
+                        metadata[key] = HubType(value)
                     except ValueError:
                         raise HubMetaDataParsingError(
                             line=line,
@@ -101,7 +101,7 @@ class HubParser(ZoneParser):
         metadata: Dict[str, HubMetaData]
         if metadata_str is None:
             metadata = {
-                "zone": ZoneType.NORMAL,
+                "zone": HubType.NORMAL,
                 "color": "none",
                 "max_drones": 1
             }
@@ -116,16 +116,23 @@ class HubParser(ZoneParser):
 
 
 class Hub(Zone):
+    COST_MAP = {
+        HubType.BLOCKED: None,
+        HubType.RESTRICTED: 2
+    }
+
     def __init__(
         self, name: str, x: int, y: int, metadata: Dict[str, HubMetaData]
     ) -> None:
         super().__init__(name, x, y)
-        self.__type = cast(ZoneType, metadata.get("zone", ZoneType.NORMAL))
+        self.__type = cast(HubType, metadata.get("zone", HubType.NORMAL))
         self.__color = cast(str, metadata.get("color", "none"))
         self.__max_drones = cast(int, metadata.get("max_drones", 1))
+        self.__cost: Optional[int] = self.COST_MAP.get(self.__type, 1)
+        self.__reservations: Dict[int, int] = {}
 
     @property
-    def type(self) -> ZoneType:
+    def type(self) -> HubType:
         return self.__type
 
     @property
@@ -135,6 +142,28 @@ class Hub(Zone):
     @property
     def max_drones(self) -> int:
         return self.__max_drones
+
+    @property
+    def cost(self) -> Optional[int]:
+        return self.__cost
+
+    def can_reserve(self, time: int) -> bool:
+        return (
+            self.__type is not HubType.BLOCKED
+            and self.__reservations.get(time, 0) < self.__max_drones
+        )
+
+    def reserve(self, time: int) -> None:
+        self.__reservations[time] = self.__reservations.get(time, 0) + 1
+
+    def nearest_reservation(self, start_time: int) -> int:
+        time = start_time
+        while not self.can_reserve(time):
+            time += 1
+        return time
+
+    def __str__(self) -> str:
+        return self.name
 
 
 class StartHub(Hub):
@@ -146,7 +175,6 @@ class StartHub(Hub):
             metadata.get("max_drones", nb_drones), nb_drones
         )
         super().__init__(name, x, y, metadata)
-        self._nb_drones_currently = nb_drones
 
 
 class EndHub(Hub):

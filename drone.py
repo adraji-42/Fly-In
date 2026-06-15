@@ -1,49 +1,64 @@
 from __future__ import annotations
 
+from typing import List
+from hub import Hub, HubType
+from path import Path, PathFinder
 from dataclasses import dataclass
-from typing import List, Optional
-
-from path import Path
+from exceptions import MapError
 
 
-@dataclass(frozen=True)
-class MovementEvent:
-    turn: int
+@dataclass(slots=True, frozen=True)
+class DroneEvent:
+    time: int
     token: str
 
 
+class DroneSheduler:
+
+    @staticmethod
+    def schedule(drone: Drone, time: int = 0) -> None:
+        path: Path = PathFinder.find_path(drone.current_hub, time)
+        if not path:
+            raise MapError(
+                "No path found in the map"
+            )
+        for i in range(1, len(path.hubs)):
+            hub = path.hubs[i]
+            connection = hub.connections[path.hubs[i - 1].name]
+
+            if hub.type is HubType.RESTRICTED:
+                time = max(
+                    connection.nearest_reservation(time),
+                    hub.nearest_reservation(time + 2) - 2
+                )
+                hub.reserve(time + 2)
+                connection.reserve(time)
+                drone.add_event(DroneEvent(time, str(connection)))
+                drone.add_event(DroneEvent(time := time + 1, str(hub)))
+            else:
+                time = max(
+                    connection.nearest_reservation(time),
+                    hub.nearest_reservation(time + 1) - 1
+                )
+                drone.add_event(DroneEvent(time, str(hub)))
+
+
 class Drone:
-    def __init__(self, drone_id: int) -> None:
+    def __init__(self, drone_id: int, current_hub: Hub) -> None:
         self.__id = drone_id
-        self.__path: Optional[Path] = None
-        self.__events: List[MovementEvent] = []
-        self.__finished_turn: Optional[int] = None
+        self.current_hub: Hub = current_hub
+        self.__events: List[DroneEvent] = []
 
     @property
     def id(self) -> int:
         return self.__id
 
     @property
-    def path(self) -> Optional[Path]:
-        return self.__path
-
-    @property
-    def events(self) -> List[MovementEvent]:
+    def events(self) -> List[DroneEvent]:
         return self.__events
 
-    @property
-    def finished(self) -> bool:
-        return self.__finished_turn is not None
+    def add_event(self, event: DroneEvent) -> None:
+        self.__events.append(event)
 
-    def assign_plan(
-        self,
-        path: Path,
-        events: List[MovementEvent],
-        finished_turn: int,
-    ) -> None:
-        self.__path = path
-        self.__events = events
-        self.__finished_turn = finished_turn
-
-    def __repr__(self) -> str:
-        return f"Drone(id={self.__id}, finished={self.finished})"
+    def __str__(self) -> str:
+        return f"D{self.__id}"
