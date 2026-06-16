@@ -13,7 +13,7 @@ class DroneEvent:
     token: str
 
 
-class DroneSheduler:
+class DroneScheduler:
 
     @staticmethod
     def schedule(drone: Drone, time: int = 0) -> None:
@@ -26,21 +26,21 @@ class DroneSheduler:
             hub = path.hubs[i]
             connection = hub.connections[path.hubs[i - 1].name]
 
-            if hub.type is HubType.RESTRICTED:
-                time = max(
-                    connection.nearest_reservation(time),
-                    hub.nearest_reservation(time + 2) - 2
-                )
-                hub.reserve(time + 2)
-                connection.reserve(time)
+            cost = hub.cost
+            time = max(
+                connection.nearest_reservation(time),
+                hub.nearest_reservation(time + cost) - cost
+            )
+            hub.reserve(time + cost)
+            connection.reserve(time)
+            
+            if cost == 2:
                 drone.add_event(DroneEvent(time, str(connection)))
-                drone.add_event(DroneEvent(time := time + 1, str(hub)))
+                drone.add_event(DroneEvent(time + 1, str(hub)))
             else:
-                time = max(
-                    connection.nearest_reservation(time),
-                    hub.nearest_reservation(time + 1) - 1
-                )
                 drone.add_event(DroneEvent(time, str(hub)))
+                
+            time += cost
 
 
 class Drone:
