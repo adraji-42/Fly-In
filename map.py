@@ -1,10 +1,10 @@
-from drone import Drone
-from regex import MapRegex  # type: ignore
-from mytypes import MapAttributes
-from hub import StartHub, Hub, EndHub
+from .drone import Drone
+from .regex import MapRegex  # type: ignore
+from .mytypes import MapAttributes
+from .hub import StartHub, Hub, EndHub
 from typing import Dict, List, Tuple, Iterator, Optional
-from factorys import HubFactory, ConnectionFactory
-from exceptions import MapParsingError, ConnectionError, HubError
+from .factorys import HubFactory, ConnectionFactory
+from .exceptions import MapParsingError, ConnectionError, HubError
 
 
 class MapParser:

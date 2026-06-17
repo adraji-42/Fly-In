@@ -1,6 +1,6 @@
-from map import Map
+from .map import Map
 from typing import Dict, List
-from drone import DroneScheduler
+from .drone import DroneScheduler
 
 
 class Simulation:

@@ -1,8 +1,9 @@
-from hub import Hub
-from typing import Dict
-from mytypes import ConnectionAttribute
-from regex import ConnectionRegex
-from exceptions import (
+from re import Match
+from .hub import Hub
+from typing import Dict, Optional
+from .mytypes import ConnectionAttribute
+from .regex import ConnectionRegex
+from .exceptions import (
     ConnectionParsingError,
     ConnectionMetaDataParsingError
 )
@@ -45,7 +46,7 @@ class ConnectionParser:
                 )
 
     def parse(self, line: str) -> ConnectionAttribute:
-        match = ConnectionRegex.CONNECTION_LINE.match(line)
+        match: Optional[Match[str]] = ConnectionRegex.CONNECTION_LINE.match(line)
 
         if not match:
             raise ConnectionParsingError(line=line)

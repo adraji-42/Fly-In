@@ -1,8 +1,8 @@
-from regex import HubRegex
-from zone import Zone, ZoneParser
+from .regex import HubRegex
+from .zone import Zone, ZoneParser
 from typing import Dict, cast, Optional
-from mytypes import HubType, HubAttribute, HubMetaData
-from exceptions import (
+from .mytypes import HubType, HubAttribute, HubMetaData
+from .exceptions import (
     HubParsingError, HubMetaDataParsingError
 )
 
@@ -116,7 +116,7 @@ class HubParser(ZoneParser):
 
 
 class Hub(Zone):
-    COST_MAP = {
+    COST_MAP: Dict[HubType, Optional[int]] = {
         HubType.BLOCKED: None,
         HubType.RESTRICTED: 2
     }

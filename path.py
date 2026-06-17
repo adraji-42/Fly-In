@@ -1,9 +1,9 @@
-from hub import EndHub, Hub
+from .hub import EndHub, Hub
 from itertools import count
-from mytypes import HubType
-from connection import Connection
+from .mytypes import HubType
+from .connection import Connection
 from heapq import heappop, heappush
-from typing import Set, List, Dict, Tuple, Optional
+from typing import Set, List, Dict, Tuple, Optional, cast
 
 
 class Path:
@@ -31,7 +31,7 @@ class PathFinder:
         current: Hub,
         connection: Connection
     ) -> int:
-        move_cost = connection.hub_to.cost
+        move_cost = cast(int, connection.hub_to.cost)
         wait_cost = max(
             connection.nearest_reservation(current_cost),
             connection.hub_to.nearest_reservation(current_cost + move_cost) - move_cost

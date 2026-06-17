@@ -1,7 +1,7 @@
-from typing import Dict
-from hub import StartHub, Hub, EndHub, HubParser
-from connection import Connection, ConnectionParser
-from exceptions import HubParsingError, ConnectionParsingError
+from typing import Dict, Callable
+from .hub import StartHub, Hub, EndHub, HubParser
+from .connection import Connection, ConnectionParser
+from .exceptions import HubParsingError, ConnectionParsingError
 
 
 class HubFactory:
@@ -18,7 +18,7 @@ class HubFactory:
 
         self.__seen.add((x, y))
 
-        builders = {
+        builders: Dict[str, Callable[[], Hub]] = {
             "start_hub": lambda: StartHub(name, x, y, nb_drones, metadata),
             "hub": lambda: Hub(name, x, y, metadata),
             "end_hub": lambda: EndHub(name, x, y, nb_drones, metadata),

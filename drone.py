@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import List
-from hub import Hub, HubType
-from exceptions import MapError
-from path import Path, PathFinder
+from .hub import Hub
+from .exceptions import MapError
+from .path import Path, PathFinder
 from dataclasses import dataclass
+from typing import List, cast, Optional
 
 
 @dataclass(slots=True, frozen=True)
@@ -17,7 +17,7 @@ class DroneScheduler:
 
     @staticmethod
     def schedule(drone: Drone, time: int = 0) -> None:
-        path: Path = PathFinder.find_path(drone.current_hub, time)
+        path: Optional[Path] = PathFinder.find_path(drone.current_hub, time)
         if not path:
             raise MapError(
                 "No path found in the map"
@@ -26,7 +26,7 @@ class DroneScheduler:
             hub = path.hubs[i]
             connection = hub.connections[path.hubs[i - 1].name]
 
-            cost = hub.cost
+            cost = cast(int, hub.cost)
             time = max(
                 connection.nearest_reservation(time),
                 hub.nearest_reservation(time + cost) - cost

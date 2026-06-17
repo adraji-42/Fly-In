@@ -1,8 +1,8 @@
 from re import Pattern
 from enum import StrEnum
-from mytypes import HubType
+from .mytypes import HubType
 from dataclasses import dataclass
-from regex import ConnectionRegex, MapRegex
+from .regex import ConnectionRegex, MapRegex
 from typing import Any, Callable, Optional, Tuple, cast
 
 
@@ -227,7 +227,7 @@ class HubMetadataProblemLocator:
                 value_span,
                 f"'{value}' is not a valid color value.",
                 "letters only, such as blue or red.",
-                "remove digits, punctuation, or spaces from the color value.",
+                "remove digits, punctuation, or spaces from .the color value.",
                 True,
             )
         if key == "max_drones":
@@ -245,7 +245,7 @@ class HubMetadataProblemLocator:
 
 
 class ConnectionMetadataProblemLocator:
-    metadata_regex: Pattern = ConnectionRegex.CONNECTION_METADATA
+    metadata_regex: Pattern[str] = ConnectionRegex.CONNECTION_METADATA
 
     def __init__(self, metadata: str) -> None:
         self.metadata = metadata or ""
@@ -354,7 +354,7 @@ class ConnectionMetadataProblemLocator:
 
 
 class MapLineProblemLocator:
-    drones_regex: Pattern = MapRegex.NB_DRONS
+    drones_regex: Pattern[str] = MapRegex.NB_DRONS
 
     def __init__(self, line: str) -> None:
         self.line = line or ""
