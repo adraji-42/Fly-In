@@ -1,7 +1,7 @@
 from typing import Dict, Callable
-from .hub import StartHub, Hub, EndHub, HubParser
-from .connection import Connection, ConnectionParser
-from .exceptions import HubParsingError, ConnectionParsingError
+from hub import StartHub, Hub, EndHub, HubParser
+from connection import Connection, ConnectionParser
+from exceptions import HubParsingError, ConnectionParsingError
 
 
 class HubFactory:
@@ -49,8 +49,8 @@ class ConnectionFactory:
         self.__seen.add(pair)
 
         zones[zone1].connect(
-            Connection(zone1, zones[zone2], max_link_capacity)
+            Connection(zones[zone1], zones[zone2], max_link_capacity)
         )
         zones[zone2].connect(
-            Connection(zone2, zones[zone1], max_link_capacity)
+            Connection(zones[zone2], zones[zone1], max_link_capacity)
         )

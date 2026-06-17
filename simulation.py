@@ -1,6 +1,6 @@
-from .map import Map
+from map import Map
 from typing import Dict, List
-from .drone import DroneScheduler
+from drone import DroneScheduler
 
 
 class Simulation:
@@ -17,4 +17,4 @@ class Simulation:
                 turns_moves[event.time].append(f"{drone}-{event.token}")
 
         for turn in sorted(turns_moves.keys()):
-            print(f"Turn {turn + 1}: {' '.join(turns_moves[turn])}")
+            print(f"{' '.join(turns_moves[turn])}")

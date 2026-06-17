@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .connection import Connection
+    from connection import Connection
 
 
 class ZoneParser(ABC):

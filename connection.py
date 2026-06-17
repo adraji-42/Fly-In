@@ -1,9 +1,9 @@
 from re import Match
-from .hub import Hub
+from hub import Hub
 from typing import Dict, Optional
-from .mytypes import ConnectionAttribute
-from .regex import ConnectionRegex
-from .exceptions import (
+from mytypes import ConnectionAttribute
+from myregex import ConnectionRegex
+from exceptions import (
     ConnectionParsingError,
     ConnectionMetaDataParsingError
 )
@@ -71,9 +71,9 @@ class ConnectionParser:
 
 class Connection:
     def __init__(
-        self, hub_from: str, hub_to: Hub, max_link_capacity: int = 1
+        self, hub_from: Hub, hub_to: Hub, max_link_capacity: int = 1
     ) -> None:
-        self.__hub_from: str = hub_from
+        self.__hub_from: str = str(hub_from)
         self.__hub_to: Hub = hub_to
         self.__max_link_capacity: int = max_link_capacity
         self.__reservations: Dict[int, int] = {}

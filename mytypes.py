@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import Dict, Union, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .hub import Hub, StartHub, EndHub
+    from hub import Hub, StartHub, EndHub
 
 
 class HubType(StrEnum):

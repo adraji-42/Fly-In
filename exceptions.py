@@ -1,8 +1,8 @@
 from re import Pattern
 from enum import StrEnum
-from .mytypes import HubType
+from mytypes import HubType
 from dataclasses import dataclass
-from .regex import ConnectionRegex, MapRegex
+from myregex import ConnectionRegex, MapRegex
 from typing import Any, Callable, Optional, Tuple, cast
 
 
@@ -227,7 +227,7 @@ class HubMetadataProblemLocator:
                 value_span,
                 f"'{value}' is not a valid color value.",
                 "letters only, such as blue or red.",
-                "remove digits, punctuation, or spaces from .the color value.",
+                "remove digits, punctuation, or spaces from the color value.",
                 True,
             )
         if key == "max_drones":

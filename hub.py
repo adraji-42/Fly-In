@@ -1,8 +1,9 @@
-from .regex import HubRegex
-from .zone import Zone, ZoneParser
+from pygame import Color
+from myregex import HubRegex
+from zone import Zone, ZoneParser
 from typing import Dict, cast, Optional
-from .mytypes import HubType, HubAttribute, HubMetaData
-from .exceptions import (
+from mytypes import HubType, HubAttribute, HubMetaData
+from exceptions import (
     HubParsingError, HubMetaDataParsingError
 )
 
@@ -126,7 +127,10 @@ class Hub(Zone):
     ) -> None:
         super().__init__(name, x, y)
         self.__type = cast(HubType, metadata.get("zone", HubType.NORMAL))
-        self.__color = cast(str, metadata.get("color", "none"))
+        try:
+            self.__color = Color(metadata.get("color", "none"))
+        except ValueError:
+            self.__color = Color("white")
         self.__max_drones = cast(int, metadata.get("max_drones", 1))
         self.__cost: Optional[int] = self.COST_MAP.get(self.__type, 1)
         self.__reservations: Dict[int, int] = {}
@@ -163,7 +167,8 @@ class Hub(Zone):
         return time
 
     def __str__(self) -> str:
-        return self.name
+        r, g, b, _ = self.__color
+        return f"\x1b[38;2;{r};{g};{b}m{self.name}\x1b[0m"
 
 
 class StartHub(Hub):

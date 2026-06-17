@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from .hub import Hub
-from .exceptions import MapError
-from .path import Path, PathFinder
+from hub import Hub
+from exceptions import MapError
+from path import Path, PathFinder
 from dataclasses import dataclass
 from typing import List, cast, Optional
 
@@ -23,22 +23,26 @@ class DroneScheduler:
                 "No path found in the map"
             )
         for i in range(1, len(path.hubs)):
-            hub = path.hubs[i]
-            connection = hub.connections[path.hubs[i - 1].name]
+            current = path.hubs[i - 1]
+            next_hub = path.hubs[i]
+            connection = path.hubs[i - 1].connections[next_hub.name]
 
-            cost = cast(int, hub.cost)
-            time = max(
-                connection.nearest_reservation(time),
-                hub.nearest_reservation(time + cost) - cost
-            )
-            hub.reserve(time + cost)
-            connection.reserve(time)
-            
+            cost = cast(int, next_hub.cost)
+            while (
+                not connection.can_reserve(time)
+                or not connection.hub_to.can_reserve(time + cost)
+            ):
+                current.reserve(time)
+                time += 1
+
             if cost == 2:
+                connection.reserve(time)
+                next_hub.reserve(time + cost)
                 drone.add_event(DroneEvent(time, str(connection)))
-                drone.add_event(DroneEvent(time + 1, str(hub)))
+                drone.add_event(DroneEvent(time + 1, str(next_hub)))
             else:
-                drone.add_event(DroneEvent(time, str(hub)))
+                next_hub.reserve(time + cost)
+                drone.add_event(DroneEvent(time, str(next_hub)))
                 
             time += cost
 

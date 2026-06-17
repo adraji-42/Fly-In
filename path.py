@@ -1,7 +1,7 @@
-from .hub import EndHub, Hub
+from hub import EndHub, Hub
 from itertools import count
-from .mytypes import HubType
-from .connection import Connection
+from mytypes import HubType
+from connection import Connection
 from heapq import heappop, heappush
 from typing import Set, List, Dict, Tuple, Optional, cast
 
@@ -26,29 +26,32 @@ class Path:
 
 class PathFinder:
     @staticmethod
-    def __next_cost(
+    def __wait_time(
         current_cost: int,
         connection: Connection
     ) -> int:
-        move_cost = cast(int, connection.hub_to.cost)
-        wait_cost = max(
-            connection.nearest_reservation(current_cost),
-            connection.hub_to.nearest_reservation(current_cost + move_cost) - move_cost
-        ) - current_cost
-        return current_cost + move_cost + wait_cost
+        wait_cost = 0
+        while (
+            not connection.can_reserve(current_cost + wait_cost)
+            or not connection.hub_to.can_reserve(
+                current_cost + cast(int, connection.hub_to.cost) + wait_cost
+            )
+        ):
+            wait_cost += 1
+        return wait_cost
 
     @classmethod
     def find_path(cls, start_hub: Hub, time: int = 0) -> Optional[Path]:
         unique = count()
         buckets: Dict[
             int,
-            List[Tuple[int, int, Hub, List[Hub], List[Connection]]],
+            List[Tuple[int, int, int, Hub, List[Hub], List[Connection]]],
         ] = {}
 
         buckets[time] = []
         heappush(
             buckets[time],
-            (1, next(unique), start_hub, [start_hub], [])
+            (2, 0, next(unique), start_hub, [start_hub], [])
         )
         current_cost = time
 
@@ -57,7 +60,7 @@ class PathFinder:
                 current_cost = min(buckets)
                 continue
 
-            priority, _, current, hubs, connections = heappop(
+            priority, wait, _, current, hubs, connections = heappop(
                 buckets[current_cost]
             )
 
@@ -76,9 +79,8 @@ class PathFinder:
                 if neighbour.name in visited:
                     continue
 
-                next_cost: int = cls.__next_cost(
-                    current_cost, connection
-                )
+                next_wait: int = cls.__wait_time(current_cost, connection)
+                next_cost: int = current_cost + next_wait + cast(int, neighbour.cost)
 
                 if current == start_hub:
                     next_priority = (
@@ -86,6 +88,7 @@ class PathFinder:
                     )
                 else:
                     next_priority = priority
+                    next_wait = wait
 
                 if next_cost not in buckets:
                     buckets[next_cost] = []
@@ -93,6 +96,7 @@ class PathFinder:
                     buckets[next_cost],
                     (
                         next_priority,
+                        next_wait,
                         next(unique),
                         neighbour,
                         hubs + [neighbour],

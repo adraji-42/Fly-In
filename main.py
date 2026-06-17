@@ -1,6 +1,6 @@
-from .map import Map
+from map import Map
 from sys import argv
-from .simulation import Simulation
+from simulation import Simulation
 
 
 def main() -> None:
