@@ -7,7 +7,7 @@ class Simulation:
     def __init__(self, _map: Map) -> None:
         self.__map = _map
 
-    def run(self) -> Generator[str]:
+    def run(self) -> Generator[str, None, None]:
         turns_moves: Dict[int, List[str]] = {}
         for drone in self.__map.drones:
             DroneScheduler.schedule(drone)

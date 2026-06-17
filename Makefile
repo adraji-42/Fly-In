@@ -17,8 +17,8 @@ install:
 	@poetry install
 
 run:
-	@echo "Running the simulation..."
-	poetry run python main.py $(MAP)
+	@echo "Running the simulation...\n"
+	@PYGAME_HIDE_SUPPORT_PROMPT=1 poetry run python main.py $(MAP)
 
 lint:
 	@echo "Running linters..."
@@ -31,8 +31,8 @@ lint-strict:
 	@poetry run mypy . --strict
 
 debug:
-	@echo "Running the simulation in debug mode..."
-	poetry run python -m pdb main.py $(MAP)
+	@echo "Running the simulation in debug mode...\n"
+	@PYGAME_HIDE_SUPPORT_PROMPT=1 poetry run python -m pdb main.py $(MAP)
 
 clean:
 	@echo "Cleaning up..."
