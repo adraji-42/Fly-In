@@ -28,7 +28,6 @@ class PathFinder:
     @staticmethod
     def __next_cost(
         current_cost: int,
-        current: Hub,
         connection: Connection
     ) -> int:
         move_cost = cast(int, connection.hub_to.cost)
