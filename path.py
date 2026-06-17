@@ -77,7 +77,7 @@ class PathFinder:
                     continue
 
                 next_cost: int = cls.__next_cost(
-                    current_cost, current, connection
+                    current_cost, connection
                 )
 
                 if current == start_hub:
