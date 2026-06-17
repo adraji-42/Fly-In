@@ -46,7 +46,9 @@ class ConnectionParser:
                 )
 
     def parse(self, line: str) -> ConnectionAttribute:
-        match: Optional[Match[str]] = ConnectionRegex.CONNECTION_LINE.match(line)
+        match: Optional[Match[str]] = ConnectionRegex.CONNECTION_LINE.match(
+            line
+        )
 
         if not match:
             raise ConnectionParsingError(line=line)

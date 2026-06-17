@@ -80,7 +80,9 @@ class PathFinder:
                     continue
 
                 next_wait: int = cls.__wait_time(current_cost, connection)
-                next_cost: int = current_cost + next_wait + cast(int, neighbour.cost)
+                next_cost: int = (
+                    current_cost + next_wait + cast(int, neighbour.cost)
+                )
 
                 if current == start_hub:
                     next_priority = (

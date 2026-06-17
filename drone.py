@@ -43,7 +43,7 @@ class DroneScheduler:
             else:
                 next_hub.reserve(time + cost)
                 drone.add_event(DroneEvent(time, str(next_hub)))
-                
+
             time += cost
 
 

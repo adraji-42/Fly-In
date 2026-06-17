@@ -1,13 +1,13 @@
 from map import Map
-from typing import Dict, List
 from drone import DroneScheduler
+from typing import Dict, List, Generator
 
 
 class Simulation:
     def __init__(self, _map: Map) -> None:
         self.__map = _map
 
-    def run(self) -> None:
+    def run(self) -> Generator[str]:
         turns_moves: Dict[int, List[str]] = {}
         for drone in self.__map.drones:
             DroneScheduler.schedule(drone)
@@ -17,4 +17,4 @@ class Simulation:
                 turns_moves[event.time].append(f"{drone}-{event.token}")
 
         for turn in sorted(turns_moves.keys()):
-            print(f"{' '.join(turns_moves[turn])}")
+            yield f"{' '.join(turns_moves[turn])}"

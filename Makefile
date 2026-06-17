@@ -1,0 +1,42 @@
+REMAINING_GOALS = $(filter-out clean lint lint-strict,$(MAKECMDGOALS))
+
+ifeq ($(MAKECMDGOALS),)
+    REMAINING_GOALS = all
+endif
+
+ifneq ($(REMAINING_GOALS),)
+    ifeq ($(MAP),)
+        $(error MAP variable is required to use target $(REMAINING_GOALS). Usage: make MAP=path/to/map.txt)
+    endif
+endif
+
+all: install lint run
+
+install:
+	@echo "Installing dependencies..."
+	@poetry install
+
+run:
+	@echo "Running the simulation..."
+	poetry run python main.py $(MAP)
+
+lint:
+	@echo "Running linters..."
+	@poetry run flake8 .
+	@poetry run mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs
+
+lint-strict:
+	@echo "Running linters in strict mode..."
+	@poetry run flake8 .
+	@poetry run mypy . --strict
+
+debug:
+	@echo "Running the simulation in debug mode..."
+	poetry run python -m pdb main.py $(MAP)
+
+clean:
+	@echo "Cleaning up..."
+	@find . -type d -name "__pycache__" | xargs rm -rf
+	@rm -rf *.lock .mypy_cache
+
+.PHONY: install run lint lint-strict debug clean

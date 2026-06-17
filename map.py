@@ -99,9 +99,9 @@ class Map:
         self.__hubs: Dict[str, Hub]
         self.__end_hub: EndHub
 
-        self.__nb_drones, self.__start_hub, self.__hubs, self.__end_hub = MapParser(
-            map_path
-        ).parse()
+        self.__nb_drones, self.__start_hub, self.__hubs, self.__end_hub = (
+            MapParser(map_path).parse()
+        )
 
         self.__drones: List[Drone] = [
             Drone(i, self.__start_hub) for i in range(1, self.__nb_drones + 1)

@@ -128,7 +128,7 @@ class Hub(Zone):
         super().__init__(name, x, y)
         self.__type = cast(HubType, metadata.get("zone", HubType.NORMAL))
         try:
-            self.__color = Color(metadata.get("color", "none"))
+            self.__color: Color = Color(metadata.get("color", "none"))
         except ValueError:
             self.__color = Color("white")
         self.__max_drones = cast(int, metadata.get("max_drones", 1))
@@ -140,7 +140,7 @@ class Hub(Zone):
         return self.__type
 
     @property
-    def color(self) -> str:
+    def color(self) -> Color:
         return self.__color
 
     @property
