@@ -44,17 +44,12 @@ class MapParser:
                 error_start=0,
                 error_end=0,
                 reason=(
-                    "the file is empty"
-                    " or has no valid lines"
+                    "the file is empty or has only a commend and empty lines"
                 ),
-                expected=(
-                    "nb_drones: <positive integer>"
+                expected="nb_drones: <positive integer>",
+                how_to_fix="add a nb_drones line as the first entry"
                 ),
-                how_to_fix=(
-                    "add a nb_drones line"
-                    " as the first entry"
-                ),
-            ))
+            )
 
         match = MapRegex.NB_DRONS.match(line)
 
