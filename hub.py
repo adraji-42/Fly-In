@@ -4,7 +4,8 @@ from zone import Zone, ZoneParser
 from typing import Dict, cast, Optional
 from mytypes import HubType, HubAttribute, HubMetaData
 from exceptions import (
-    HubParsingError, HubMetaDataParsingError
+    MapFormatError, ErrorInfo,
+    HubLineInspector, HubMetadataInspector,
 )
 
 
@@ -14,71 +15,161 @@ class HubParser(ZoneParser):
 
         @staticmethod
         def parse(
-            line: str, metadata_str: str
+            line: str, metadata_str: str,
+            line_number: int, metadata_offset: int,
         ) -> Dict[str, HubMetaData]:
             if not HubRegex.HUB_METADATA.match(metadata_str):
-                raise HubMetaDataParsingError(
-                    line=line,
-                    metadata=metadata_str,
+                raise MapFormatError(
+                    HubMetadataInspector.inspect(
+                        line, metadata_str,
+                        line_number, metadata_offset,
+                    )
                 )
 
             metadata: Dict[str, HubMetaData] = dict()
             remaining = metadata_str.strip()
+            search_from = metadata_offset
 
             while remaining:
                 match = HubRegex.PAIRS_KV.match(remaining)
                 if not match:
-                    raise HubMetaDataParsingError(
-                        line=line,
-                        metadata=metadata_str,
+                    raise MapFormatError(
+                        HubMetadataInspector.inspect(
+                            line, metadata_str,
+                            line_number, metadata_offset,
+                        )
                     )
 
-                key = match.group("key").strip().lower()
-                value = match.group("value").strip()
-                remaining = remaining[match.end():].strip()
+                key = match.group("key")
+                value = match.group("value")
+                key_pos = line.find(key, search_from)
+                val_pos = line.find(
+                    value, key_pos + len(key)
+                )
+                search_from = val_pos + len(value)
+                remaining = remaining[
+                    match.end():
+                ].strip()
 
                 if key == "zone":
                     try:
-                        metadata[key] = HubType(value.lower())
+                        metadata[key] = HubType(value)
                     except ValueError:
-                        raise HubMetaDataParsingError(
-                            line=line,
-                            metadata=metadata_str,
-                        )
+                        raise MapFormatError(ErrorInfo(
+                            line_number=line_number,
+                            line_content=line,
+                            error_start=val_pos,
+                            error_end=val_pos + len(value),
+                            reason=(
+                                f"'{value}' is not a"
+                                " valid zone type"
+                            ),
+                            expected=(
+                                "normal, blocked,"
+                                " restricted, or priority"
+                            ),
+                            how_to_fix=(
+                                f"replace '{value}' with"
+                                " a valid zone type"
+                            ),
+                        ))
                 elif key == "color":
                     if not value.isalpha():
-                        raise HubMetaDataParsingError(
-                            line=line,
-                            metadata=metadata_str,
-                        )
-                    metadata[key] = value.lower()
+                        raise MapFormatError(ErrorInfo(
+                            line_number=line_number,
+                            line_content=line,
+                            error_start=val_pos,
+                            error_end=val_pos + len(value),
+                            reason=(
+                                f"'{value}' is not a"
+                                " valid color name"
+                            ),
+                            expected=(
+                                "letters only, such as"
+                                " blue or red"
+                            ),
+                            how_to_fix=(
+                                "remove digits or"
+                                " punctuation from"
+                                " the color value"
+                            ),
+                        ))
+                    metadata[key] = value
                 elif key == "max_drones":
                     try:
                         max_drones = int(value)
                         if max_drones <= 0:
-                            raise HubMetaDataParsingError(
-                                line=line,
-                                metadata=metadata_str,
-                            )
+                            raise MapFormatError(ErrorInfo(
+                                line_number=line_number,
+                                line_content=line,
+                                error_start=val_pos,
+                                error_end=(
+                                    val_pos + len(value)
+                                ),
+                                reason=(
+                                    f"'{value}' must be"
+                                    " greater than 0"
+                                ),
+                                expected=(
+                                    "a positive integer"
+                                    " greater than 0"
+                                ),
+                                how_to_fix=(
+                                    "use a positive number"
+                                    " for max_drones"
+                                ),
+                            ))
                         metadata[key] = max_drones
                     except ValueError:
-                        raise HubMetaDataParsingError(
-                            line=line,
-                            metadata=metadata_str,
-                        )
+                        raise MapFormatError(ErrorInfo(
+                            line_number=line_number,
+                            line_content=line,
+                            error_start=val_pos,
+                            error_end=val_pos + len(value),
+                            reason=(
+                                f"'{value}' is not a"
+                                " valid integer"
+                            ),
+                            expected=(
+                                "an integer, such as"
+                                " 1 or 5"
+                            ),
+                            how_to_fix=(
+                                "replace max_drones value"
+                                " with a whole number"
+                            ),
+                        ))
                 else:
-                    raise HubMetaDataParsingError(
-                        line=line,
-                        metadata=metadata_str,
-                    )
+                    raise MapFormatError(ErrorInfo(
+                        line_number=line_number,
+                        line_content=line,
+                        error_start=key_pos,
+                        error_end=key_pos + len(key),
+                        reason=(
+                            f"'{key}' is not a valid"
+                            " hub metadata key"
+                        ),
+                        expected=(
+                            "zone, color, or max_drones"
+                        ),
+                        how_to_fix=(
+                            "rename the key to a"
+                            " supported metadata key"
+                            " or remove it"
+                        ),
+                    ))
 
             return metadata
 
-    def parse(self, line: str) -> HubAttribute:
+    def parse(
+        self, line: str, line_number: int,
+    ) -> HubAttribute:
         match = HubRegex.HUB_LINE.match(line)
 
         if not match:
-            raise HubParsingError(line=line)
+            raise MapFormatError(
+                HubLineInspector.inspect(line, line_number)
+            )
 
         _type = match.group("type").lower()
         name = match.group("name")
@@ -89,13 +180,67 @@ class HubParser(ZoneParser):
         y_match = HubRegex.ZONE_COORDINATE.match(y)
 
         if not type_match:
-            raise HubParsingError(line=line)
+            raise MapFormatError(ErrorInfo(
+                line_number=line_number,
+                line_content=line,
+                error_start=match.start("type"),
+                error_end=match.end("type"),
+                reason=(
+                    f"'{_type}' is not a valid hub type"
+                ),
+                expected=(
+                    "start_hub, hub, or end_hub"
+                ),
+                how_to_fix=(
+                    "use start_hub, hub,"
+                    " or end_hub as the type"
+                ),
+            ))
         if not name_match:
-            raise HubParsingError(line=line)
+            raise MapFormatError(ErrorInfo(
+                line_number=line_number,
+                line_content=line,
+                error_start=match.start("name"),
+                error_end=match.end("name"),
+                reason=(
+                    f"'{name}' is not a valid hub name"
+                ),
+                expected=(
+                    "a name without dashes or spaces"
+                ),
+                how_to_fix=(
+                    f"rename '{name}' to a"
+                    " valid identifier"
+                ),
+            ))
         if not x_match:
-            raise HubParsingError(line=line)
+            raise MapFormatError(ErrorInfo(
+                line_number=line_number,
+                line_content=line,
+                error_start=match.start("x"),
+                error_end=match.end("x"),
+                reason=(
+                    f"'{x}' is not a valid x coordinate"
+                ),
+                expected="an integer value for x",
+                how_to_fix=(
+                    f"replace '{x}' with a valid integer"
+                ),
+            ))
         if not y_match:
-            raise HubParsingError(line=line)
+            raise MapFormatError(ErrorInfo(
+                line_number=line_number,
+                line_content=line,
+                error_start=match.start("y"),
+                error_end=match.end("y"),
+                reason=(
+                    f"'{y}' is not a valid y coordinate"
+                ),
+                expected="an integer value for y",
+                how_to_fix=(
+                    f"replace '{y}' with a valid integer"
+                ),
+            ))
 
         metadata_str = match.group("metadata")
 
@@ -107,10 +252,33 @@ class HubParser(ZoneParser):
                 "max_drones": 1
             }
         elif not metadata_str.strip():
-            raise HubMetaDataParsingError(line=line, metadata=metadata_str)
+            bracket_start = line.find("[")
+            bracket_end = line.find(
+                "]", bracket_start
+            ) + 1
+            raise MapFormatError(ErrorInfo(
+                line_number=line_number,
+                line_content=line,
+                error_start=bracket_start,
+                error_end=bracket_end,
+                reason="the metadata block is empty",
+                expected=(
+                    "key=value pairs"
+                    " or no brackets at all"
+                ),
+                how_to_fix=(
+                    "remove the empty brackets"
+                    " or add metadata"
+                ),
+            ))
         else:
+            raw = metadata_str
+            stripped = raw.strip()
+            leading = len(raw) - len(raw.lstrip())
+            m_offset = match.start("metadata") + leading
             metadata = self.HubMetaDataParser.parse(
-                line, metadata_str.strip()
+                line, stripped,
+                line_number, m_offset,
             )
 
         return _type, name, int(x), int(y), metadata
@@ -123,16 +291,26 @@ class Hub(Zone):
     }
 
     def __init__(
-        self, name: str, x: int, y: int, metadata: Dict[str, HubMetaData]
+        self, name: str, x: int, y: int,
+        metadata: Dict[str, HubMetaData],
     ) -> None:
         super().__init__(name, x, y)
-        self.__type = cast(HubType, metadata.get("zone", HubType.NORMAL))
+        self.__type = cast(
+            HubType,
+            metadata.get("zone", HubType.NORMAL),
+        )
         try:
-            self.__color: Color = Color(metadata.get("color", "none"))
+            self.__color: Color = Color(
+                metadata.get("color", "none")
+            )
         except ValueError:
             self.__color = Color("white")
-        self.__max_drones = cast(int, metadata.get("max_drones", 1))
-        self.__cost: Optional[int] = self.COST_MAP.get(self.__type, 1)
+        self.__max_drones = cast(
+            int, metadata.get("max_drones", 1)
+        )
+        self.__cost: Optional[int] = self.COST_MAP.get(
+            self.__type, 1
+        )
         self.__reservations: Dict[int, int] = {}
 
     @property
@@ -154,13 +332,18 @@ class Hub(Zone):
     def can_reserve(self, time: int) -> bool:
         return (
             self.__type is not HubType.BLOCKED
-            and self.__reservations.get(time, 0) < self.__max_drones
+            and self.__reservations.get(time, 0)
+            < self.__max_drones
         )
 
     def reserve(self, time: int) -> None:
-        self.__reservations[time] = self.__reservations.get(time, 0) + 1
+        self.__reservations[time] = (
+            self.__reservations.get(time, 0) + 1
+        )
 
-    def nearest_reservation(self, start_time: int) -> int:
+    def nearest_reservation(
+        self, start_time: int,
+    ) -> int:
         time = start_time
         while not self.can_reserve(time):
             time += 1
@@ -168,16 +351,21 @@ class Hub(Zone):
 
     def __str__(self) -> str:
         r, g, b, _ = self.__color
-        return f"\x1b[38;2;{r};{g};{b}m{self.name}\x1b[0m"
+        return (
+            f"\x1b[38;2;{r};{g};{b}m"
+            f"{self.name}\x1b[0m"
+        )
 
 
 class StartHub(Hub):
     def __init__(
         self, name: str, x: int, y: int,
-        nb_drones: int, metadata: Dict[str, HubMetaData]
+        nb_drones: int,
+        metadata: Dict[str, HubMetaData],
     ) -> None:
         metadata["max_drones"] = max(
-            metadata.get("max_drones", nb_drones), nb_drones
+            metadata.get("max_drones", nb_drones),
+            nb_drones,
         )
         super().__init__(name, x, y, metadata)
 
@@ -185,9 +373,11 @@ class StartHub(Hub):
 class EndHub(Hub):
     def __init__(
         self, name: str, x: int, y: int,
-        nb_drones: int, metadata: Dict[str, HubMetaData]
+        nb_drones: int,
+        metadata: Dict[str, HubMetaData],
     ) -> None:
         metadata["max_drones"] = max(
-            metadata.get("max_drones", nb_drones), nb_drones
+            metadata.get("max_drones", nb_drones),
+            nb_drones,
         )
         super().__init__(name, x, y, metadata)

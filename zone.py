@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 class ZoneParser(ABC):
 
     @abstractmethod
-    def parse(self, line: str) -> Any:
+    def parse(self, line: str, line_number: int) -> Any:
         ...
 
 
