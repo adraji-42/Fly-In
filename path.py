@@ -51,7 +51,7 @@ class PathFinder:
         buckets[time] = []
         heappush(
             buckets[time],
-            (2, 0, next(unique), start_hub, [start_hub], [])
+            (1, 0, next(unique), start_hub, [start_hub], [])
         )
         current_cost = time
 
@@ -86,7 +86,7 @@ class PathFinder:
 
                 if current == start_hub:
                     next_priority = (
-                        0 if neighbour.type is HubType.PRIORITY else 1
+                        0 if neighbour.type is HubType.PRIORITY else priority
                     )
                 else:
                     next_priority = priority
