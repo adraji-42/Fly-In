@@ -11,6 +11,8 @@ class MapParser:
     def __init__(self, map_path: str) -> None:
         with open(map_path, 'r') as file:
             self.__content = file.readlines()
+        if not self.__content:
+            raise MapParsingError("Map file is empty")
         self.h_factory = HubFactory()
         self.c_factory = ConnectionFactory()
 
