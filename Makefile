@@ -1,4 +1,4 @@
-REMAINING_GOALS = $(filter-out clean lint lint-strict,$(MAKECMDGOALS))
+REMAINING_GOALS = $(filter-out clean lint lint-strict install,$(MAKECMDGOALS))
 
 ifeq ($(MAKECMDGOALS),)
     REMAINING_GOALS = all
@@ -13,6 +13,7 @@ endif
 all: install lint run
 
 install:
+	@pip install poetry || python3 -m pip install poetry || (echo "Error: Poetry installation failed. Please install Poetry manually." && exit 1)
 	@echo "Installing dependencies..."
 	@poetry install
 
