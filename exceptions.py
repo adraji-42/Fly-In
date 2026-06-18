@@ -43,14 +43,13 @@ class TextSpan:
 
 
 class TextHighlighter:
-    def __init__(self, color: Color = Color.RED_BG) -> None:
-        self.color = color
 
     def highlight(self, text: str, span: TextSpan) -> str:
         span = span.normalized_for(text)
         return (
-            f"{text[:span.start]}{self.color}"
-            f"{text[span.start:span.end]}{Color.RESET}{text[span.end:]}"
+            f"{Color.RED}{text[:span.start]}{Color.RED_BG}"
+            f"{text[span.start:span.end]}{Color.RED}"
+            f"{text[span.end:]}{Color.RESET}"
         )
 
 
@@ -113,12 +112,12 @@ class HubMetadataProblemLocator:
             )
 
         while self.index < len(self.metadata):
-            self._skip_spaces()
+            self.__skip_spaces()
             if self.index >= len(self.metadata):
                 break
 
             key_start = self.index
-            key = self._read_key()
+            key = self.__read_key()
             key_span = TextSpan(key_start, self.index)
 
             if not key:
@@ -133,7 +132,7 @@ class HubMetadataProblemLocator:
                     True,
                 )
 
-            self._skip_spaces()
+            self.__skip_spaces()
             if (
                 self.index >= len(self.metadata)
                 or self.metadata[self.index] != "="
@@ -147,7 +146,7 @@ class HubMetadataProblemLocator:
                 )
 
             self.index += 1
-            self._skip_spaces()
+            self.__skip_spaces()
             if self.index >= len(self.metadata):
                 return ParsingProblem(
                     TextSpan(max(0, self.index - 1), len(self.metadata)),
@@ -158,9 +157,9 @@ class HubMetadataProblemLocator:
                 )
 
             value_start = self.index
-            value = self._read_value()
+            value = self.__read_value()
             value_span = TextSpan(value_start, self.index)
-            invalid = self._validate_pair(key, value, key_span, value_span)
+            invalid = self.__validate_pair(key, value, key_span, value_span)
             if invalid is not None:
                 return invalid
 
@@ -173,14 +172,14 @@ class HubMetadataProblemLocator:
             False,
         )
 
-    def _skip_spaces(self) -> None:
+    def __skip_spaces(self) -> None:
         while (
             self.index < len(self.metadata)
             and self.metadata[self.index].isspace()
         ):
             self.index += 1
 
-    def _read_key(self) -> str:
+    def __read_key(self) -> str:
         start = self.index
         while (
             self.index < len(self.metadata)
@@ -190,7 +189,7 @@ class HubMetadataProblemLocator:
             self.index += 1
         return self.metadata[start:self.index]
 
-    def _read_value(self) -> str:
+    def __read_value(self) -> str:
         start = self.index
         while (
             self.index < len(self.metadata)
@@ -199,7 +198,7 @@ class HubMetadataProblemLocator:
             self.index += 1
         return self.metadata[start:self.index]
 
-    def _validate_pair(
+    def __validate_pair(
         self,
         key: str,
         value: str,
@@ -264,7 +263,7 @@ class ConnectionMetadataProblemLocator:
 
         match = self.metadata_regex.match(self.metadata)
         if not match:
-            return self._locate_format_error()
+            return self.__locate_format_error()
 
         key = match.group("key")
         value = match.group("value")
@@ -306,7 +305,7 @@ class ConnectionMetadataProblemLocator:
             False,
         )
 
-    def _locate_format_error(self) -> ParsingProblem:
+    def __locate_format_error(self) -> ParsingProblem:
         stripped = self.metadata.strip()
         start = self.metadata.find(stripped)
 
@@ -640,10 +639,11 @@ class MapParsingError(MapError):
                 f"What is wrong: {problem.reason}\n"
                 "Why it is invalid: every map must start with "
                 "'nb_drones: <positive integer>' "
-                "and then contain valid hub or connection lines.\n"
-                "Correct format: nb_drones: 3, "
-                "hub: H1 0 0 [zone=normal color=blue max_drones=2], "
-                "or connection: H1-H2 [max_link_capacity=1].\n"
+                "and then contain valid hub or connection lines. Correct format:\n"
+                "nb_drones: 3\n"
+                "hub: H1 0 0\n"
+                "hub: H2 0 1 [zone=normal color=blue max_drones=2]\n"
+                "connection: H1-H2 [max_link_capacity=1]\n"
                 f"What is expected here: {problem.expected}\n"
                 f"How to fix it: {problem.fix}\n"
                 f"Line: {highlighted_line}"

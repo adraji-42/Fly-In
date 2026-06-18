@@ -30,18 +30,18 @@ class DroneScheduler:
             cost = cast(int, next_hub.cost)
             while (
                 not connection.can_reserve(time)
-                or not connection.hub_to.can_reserve(time + cost)
+                or not next_hub.can_reserve(time + cost)
             ):
                 current.reserve(time)
                 time += 1
 
+            connection.reserve(time)
+            next_hub.reserve(time + cost)
+
             if cost == 2:
-                connection.reserve(time)
-                next_hub.reserve(time + cost)
                 drone.add_event(DroneEvent(time, str(connection)))
                 drone.add_event(DroneEvent(time + 1, str(next_hub)))
             else:
-                next_hub.reserve(time + cost)
                 drone.add_event(DroneEvent(time, str(next_hub)))
 
             time += cost

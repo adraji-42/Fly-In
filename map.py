@@ -2,8 +2,8 @@ from drone import Drone
 from myregex import MapRegex
 from mytypes import MapAttributes
 from hub import StartHub, Hub, EndHub
-from typing import Dict, List, Tuple, Iterator, Optional
 from factorys import HubFactory, ConnectionFactory
+from typing import Dict, List, Tuple, Generator, Optional
 from exceptions import MapParsingError, ConnectionError, HubError
 
 
@@ -11,16 +11,15 @@ class MapParser:
     def __init__(self, map_path: str) -> None:
         with open(map_path, 'r') as file:
             self.__content = file.readlines()
-        if not self.__content:
-            raise MapParsingError("Map file is empty")
         self.h_factory = HubFactory()
         self.c_factory = ConnectionFactory()
 
-    def __lines(self) -> Iterator[Tuple[int, str]]:
+    def __lines(self) -> Generator[Tuple[int, str], None, None]:
         for line_number, line in enumerate(self.__content, 1):
             line = line.split('#')[0].strip()
             if line:
                 yield line_number, line
+        yield -1, ""
 
     def parse(self) -> MapAttributes:
         all_hubs: Dict[str, Hub] = dict()
@@ -31,30 +30,36 @@ class MapParser:
         nb_drones = None
         lines = self.__lines()
 
-        for n, line in lines:
-            match = MapRegex.NB_DRONS.match(line)
+        n, line = next(lines)
+        if n == -1:
+            raise MapParsingError(
+                "The file is empty or filled with comments and empty lines"
+            )
 
-            if not match:
+        match = MapRegex.NB_DRONS.match(line)
+
+        if not match:
+            raise MapParsingError(line=line, line_number=n)
+
+        if match.group('key').lower() != 'nb_drones':
+            raise MapParsingError(line=line, line_number=n)
+
+        try:
+            nb_drones = int(match.group('value'))
+            if nb_drones <= 0:
                 raise MapParsingError(line=line, line_number=n)
-
-            if match.group('key').lower() != 'nb_drones':
-                raise MapParsingError(line=line, line_number=n)
-
-            try:
-                nb_drones = int(match.group('value'))
-                if nb_drones <= 0:
-                    raise MapParsingError(line=line, line_number=n)
-            except ValueError as error:
-                raise MapParsingError(
-                    line=line, line_number=n, original=error
-                ) from error
-
-            break
+        except (ValueError, TypeError) as error:
+            raise MapParsingError(
+                line=line, line_number=n, original=error
+            ) from error
 
         if nb_drones is None:
             raise MapParsingError()
 
         for n, line in lines:
+            if n == -1:
+                break
+
             if line.lstrip().lower().startswith("connection"):
                 try:
                     self.c_factory.create(line, all_hubs)

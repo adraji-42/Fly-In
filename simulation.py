@@ -17,4 +17,4 @@ class Simulation:
                 turns_moves[event.time].append(f"{drone}-{event.token}")
 
         for turn in sorted(turns_moves.keys()):
-            yield f"{' '.join(turns_moves[turn])}"
+            yield ' '.join(turns_moves[turn])

@@ -33,13 +33,13 @@ class HubParser(ZoneParser):
                         metadata=metadata_str,
                     )
 
-                key = match.group("key").strip()
+                key = match.group("key").strip().lower()
                 value = match.group("value").strip()
                 remaining = remaining[match.end():].strip()
 
                 if key == "zone":
                     try:
-                        metadata[key] = HubType(value)
+                        metadata[key] = HubType(value.lower())
                     except ValueError:
                         raise HubMetaDataParsingError(
                             line=line,
@@ -51,7 +51,7 @@ class HubParser(ZoneParser):
                             line=line,
                             metadata=metadata_str,
                         )
-                    metadata[key] = value
+                    metadata[key] = value.lower()
                 elif key == "max_drones":
                     try:
                         max_drones = int(value)
