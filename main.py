@@ -5,6 +5,13 @@ from exceptions import BaseMapProjectError
 
 
 def main() -> None:
+    """
+    Main entry point for the simulation program.
+
+    Reads the map file path from command line arguments, initializes the Map
+    and Simulation engine, and runs the simulation turn by turn, printing
+    the output.
+    """
     map = Map(argv[1])
     engine = Simulation(map)
     for turn, output in enumerate(engine.run(), 1):

@@ -11,14 +11,37 @@ from exceptions import (
 
 
 class ConnectionParser:
+    """
+    Parser for connection definitions in the map file.
+
+    Extracts connection attributes including the linked zones, capacity, and metadata.
+    """
 
     class ConnectionMetaDataParser:
+        """
+        Sub-parser for handling the metadata block within a connection definition line.
+        """
 
         @staticmethod
         def parse(
             line: str, metadata_str: str,
             line_number: int, metadata_offset: int,
         ) -> int:
+            """
+            Parses the metadata string for a connection to extract max link capacity.
+
+            Args:
+                line (str): The original line from the map file.
+                metadata_str (str): The extracted metadata string (content inside brackets).
+                line_number (int): The current line number in the file.
+                metadata_offset (int): The character offset where metadata begins in the line.
+
+            Returns:
+                int: The maximum link capacity parsed from metadata.
+
+            Raises:
+                MapFormatError: If the metadata format is invalid, missing, or contains invalid capacity values.
+            """
             match = ConnectionRegex.CONNECTION_METADATA.match(
                 metadata_str
             )
@@ -97,6 +120,19 @@ class ConnectionParser:
     def parse(
         self, line: str, line_number: int,
     ) -> ConnectionAttribute:
+        """
+        Parses a full connection definition line.
+
+        Args:
+            line (str): The raw line string from the map file.
+            line_number (int): The line number in the map file.
+
+        Returns:
+            ConnectionAttribute: A tuple containing zone1, zone2, and the max link capacity.
+
+        Raises:
+            MapFormatError: If the line format is invalid or missing required components.
+        """
         match: Optional[Match[str]] = (
             ConnectionRegex.CONNECTION_LINE.match(line)
         )
@@ -155,10 +191,23 @@ class ConnectionParser:
 
 
 class Connection:
+    """
+    Represents a unidirectional link from one hub to another.
+
+    Manages the maximum link capacity and reservations on this link over time.
+    """
     def __init__(
         self, hub_from: Hub, hub_to: Hub,
         max_link_capacity: int = 1,
     ) -> None:
+        """
+        Initializes a Connection.
+
+        Args:
+            hub_from (Hub): The hub from which this connection originates.
+            hub_to (Hub): The destination hub of this connection.
+            max_link_capacity (int): The maximum number of drones that can traverse this link concurrently. Defaults to 1.
+        """
         self.__hub_from: str = str(hub_from)
         self.__hub_to: Hub = hub_to
         self.__max_link_capacity: int = max_link_capacity
@@ -166,23 +215,44 @@ class Connection:
 
     @property
     def hub_from(self) -> str:
+        """str: The string representation of the source hub."""
         return self.__hub_from
 
     @property
     def hub_to(self) -> Hub:
+        """Hub: The destination hub."""
         return self.__hub_to
 
     @property
     def max_link_capacity(self) -> int:
+        """int: The maximum concurrent drone capacity of this connection."""
         return self.__max_link_capacity
 
     def can_reserve(self, time: int) -> bool:
+        """
+        Checks if the connection can be reserved at a specific time.
+
+        Args:
+            time (int): The turn number to check.
+
+        Returns:
+            bool: True if there is remaining capacity, False otherwise.
+        """
         return (
             self.__reservations.get(time, 0)
             < self.__max_link_capacity
         )
 
     def reserve(self, time: int) -> bool:
+        """
+        Reserves the connection at the given time.
+
+        Args:
+            time (int): The turn number to reserve.
+
+        Returns:
+            bool: True if reservation was successful, False if it was already at max capacity.
+        """
         if not self.can_reserve(time):
             return False
         self.__reservations[time] = (
@@ -193,10 +263,25 @@ class Connection:
     def nearest_reservation(
         self, start_time: int,
     ) -> int:
+        """
+        Finds the nearest future time from start_time when the connection can be reserved.
+
+        Args:
+            start_time (int): The time to start checking from.
+
+        Returns:
+            int: The first available time >= start_time.
+        """
         time = start_time
         while not self.can_reserve(time):
             time += 1
         return time
 
     def __str__(self) -> str:
+        """
+        Returns the string representation of the connection.
+
+        Returns:
+            str: Formatting representing the link, e.g., "hub_from-hub_to".
+        """
         return f"{self.__hub_from}-{self.__hub_to}"

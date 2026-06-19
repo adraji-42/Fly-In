@@ -3,6 +3,18 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True, slots=True)
 class ErrorInfo:
+    """
+    Data class representing details about a parsing error.
+
+    Attributes:
+        line_number (int): The line number where the error occurred.
+        line_content (str): The raw string content of the line.
+        error_start (int): The starting index of the error in the line.
+        error_end (int): The ending index of the error in the line.
+        reason (str): The reason why the error occurred.
+        expected (str): What was expected instead.
+        how_to_fix (str): Suggestion on how to fix the error.
+    """
     line_number: int
     line_content: str
     error_start: int
@@ -13,13 +25,31 @@ class ErrorInfo:
 
 
 class BaseMapProjectError(Exception):
+    """
+    Base exception class for all custom exceptions in this project.
+    """
     def __init__(self, info: ErrorInfo) -> None:
+        """
+        Initializes the base error.
+
+        Args:
+            info (ErrorInfo): Detailed information about the error.
+        """
         self.info = info
         super().__init__(str(self))
 
 
 class MapLogicError(BaseMapProjectError):
+    """
+    Exception raised for logical errors in the map definition (e.g., duplicate names, self-loops).
+    """
     def __str__(self) -> str:
+        """
+        Returns a formatted string describing the logic error.
+
+        Returns:
+            str: The error message.
+        """
         return (
             f"invalid line numbered {self.info.line_number}\n"
             f"the reason is {self.info.reason}\n"
@@ -29,7 +59,16 @@ class MapLogicError(BaseMapProjectError):
 
 
 class MapFormatError(BaseMapProjectError):
+    """
+    Exception raised for formatting and syntax errors in the map file.
+    """
     def __str__(self) -> str:
+        """
+        Returns a formatted string describing the format error, with ANSI styling indicating the location.
+
+        Returns:
+            str: The styled error message.
+        """
         s = max(0, min(self.info.error_start, len(self.info.line_content)))
         e = max(s, min(self.info.error_end, len(self.info.line_content)))
         styled = (
@@ -47,10 +86,23 @@ class MapFormatError(BaseMapProjectError):
 
 
 class HubLineInspector:
+    """
+    Inspector to analyze malformed hub lines and provide specific error details.
+    """
     @staticmethod
     def inspect(
         line: str, line_number: int
     ) -> ErrorInfo:
+        """
+        Inspects a broken hub line to diagnose the formatting error.
+
+        Args:
+            line (str): The malformed line.
+            line_number (int): The line number.
+
+        Returns:
+            ErrorInfo: Detailed diagnostics of the error.
+        """
         stripped = line.strip()
         colon_idx = stripped.find(":")
         prefix = line.find(stripped)
@@ -144,11 +196,26 @@ class HubLineInspector:
 
 
 class HubMetadataInspector:
+    """
+    Inspector to analyze malformed hub metadata blocks and provide error details.
+    """
     @staticmethod
     def inspect(
         line: str, metadata: str,
         line_number: int, metadata_offset: int
     ) -> ErrorInfo:
+        """
+        Inspects a broken hub metadata block to diagnose the formatting error.
+
+        Args:
+            line (str): The malformed line.
+            metadata (str): The malformed metadata string.
+            line_number (int): The line number.
+            metadata_offset (int): The character offset of the metadata in the line.
+
+        Returns:
+            ErrorInfo: Detailed diagnostics of the error.
+        """
         stripped = metadata.strip()
 
         if not stripped:
@@ -205,10 +272,23 @@ class HubMetadataInspector:
 
 
 class ConnectionLineInspector:
+    """
+    Inspector to analyze malformed connection lines and provide specific error details.
+    """
     @staticmethod
     def inspect(
         line: str, line_number: int
     ) -> ErrorInfo:
+        """
+        Inspects a broken connection line to diagnose the formatting error.
+
+        Args:
+            line (str): The malformed line.
+            line_number (int): The line number.
+
+        Returns:
+            ErrorInfo: Detailed diagnostics of the error.
+        """
         stripped = line.strip()
         colon_idx = stripped.find(":")
         prefix = line.find(stripped)
@@ -287,11 +367,26 @@ class ConnectionLineInspector:
 
 
 class ConnectionMetadataInspector:
+    """
+    Inspector to analyze malformed connection metadata blocks and provide error details.
+    """
     @staticmethod
     def inspect(
         line: str, metadata: str,
         line_number: int, metadata_offset: int
     ) -> ErrorInfo:
+        """
+        Inspects a broken connection metadata block to diagnose the formatting error.
+
+        Args:
+            line (str): The malformed line.
+            metadata (str): The malformed metadata string.
+            line_number (int): The line number.
+            metadata_offset (int): The character offset of the metadata in the line.
+
+        Returns:
+            ErrorInfo: Detailed diagnostics of the error.
+        """
         stripped = metadata.strip()
 
         if not stripped:
@@ -351,10 +446,23 @@ class ConnectionMetadataInspector:
 
 
 class NbDronesLineInspector:
+    """
+    Inspector to analyze malformed nb_drones lines and provide specific error details.
+    """
     @staticmethod
     def inspect(
         line: str, line_number: int
     ) -> ErrorInfo:
+        """
+        Inspects a broken nb_drones line to diagnose the formatting error.
+
+        Args:
+            line (str): The malformed line.
+            line_number (int): The line number.
+
+        Returns:
+            ErrorInfo: Detailed diagnostics of the error.
+        """
         stripped = line.strip()
 
         if ":" not in stripped:

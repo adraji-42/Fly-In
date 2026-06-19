@@ -10,14 +10,37 @@ from exceptions import (
 
 
 class HubParser(ZoneParser):
+    """
+    Parser for hub definitions in the map file.
+
+    Extracts hub attributes including type, name, coordinates, and metadata.
+    """
 
     class HubMetaDataParser:
+        """
+        Sub-parser for handling the metadata block within a hub definition line.
+        """
 
         @staticmethod
         def parse(
             line: str, metadata_str: str,
             line_number: int, metadata_offset: int,
         ) -> Dict[str, HubMetaData]:
+            """
+            Parses the metadata string into a dictionary of HubMetaData.
+
+            Args:
+                line (str): The original line from the map file.
+                metadata_str (str): The extracted metadata string (content inside brackets).
+                line_number (int): The current line number in the file.
+                metadata_offset (int): The character offset where metadata begins in the line.
+
+            Returns:
+                Dict[str, HubMetaData]: The parsed metadata key-value pairs.
+
+            Raises:
+                MapFormatError: If the metadata format is invalid or contains unexpected keys/values.
+            """
             if not HubRegex.HUB_METADATA.match(metadata_str):
                 raise MapFormatError(
                     HubMetadataInspector.inspect(
@@ -164,6 +187,19 @@ class HubParser(ZoneParser):
     def parse(
         self, line: str, line_number: int,
     ) -> HubAttribute:
+        """
+        Parses a full hub definition line.
+
+        Args:
+            line (str): The raw line string from the map file.
+            line_number (int): The line number in the map file.
+
+        Returns:
+            HubAttribute: A tuple containing the hub type, name, x, y coordinates, and metadata.
+
+        Raises:
+            MapFormatError: If the line format is invalid or missing required components.
+        """
         match = HubRegex.HUB_LINE.match(line)
 
         if not match:
@@ -285,6 +321,12 @@ class HubParser(ZoneParser):
 
 
 class Hub(Zone):
+    """
+    Represents a Hub zone on the map.
+
+    Inherits from Zone. Supports properties such as hub type, display color, maximum
+    drones capacity, traversal cost, and manages reservations.
+    """
     COST_MAP: Dict[HubType, Optional[int]] = {
         HubType.BLOCKED: None,
         HubType.RESTRICTED: 2
@@ -294,6 +336,15 @@ class Hub(Zone):
         self, name: str, x: int, y: int,
         metadata: Dict[str, HubMetaData],
     ) -> None:
+        """
+        Initializes a Hub.
+
+        Args:
+            name (str): The name of the hub.
+            x (int): The x coordinate.
+            y (int): The y coordinate.
+            metadata (Dict[str, HubMetaData]): Configuration metadata for the hub.
+        """
         super().__init__(name, x, y)
         self.__type = cast(
             HubType,
@@ -315,21 +366,34 @@ class Hub(Zone):
 
     @property
     def type(self) -> HubType:
+        """HubType: The type classification of the hub."""
         return self.__type
 
     @property
     def color(self) -> Color:
+        """Color: The display color for the hub output."""
         return self.__color
 
     @property
     def max_drones(self) -> int:
+        """int: The maximum number of drones that can occupy the hub concurrently."""
         return self.__max_drones
 
     @property
     def cost(self) -> Optional[int]:
+        """Optional[int]: The cost/time to traverse this hub. None if blocked."""
         return self.__cost
 
     def can_reserve(self, time: int) -> bool:
+        """
+        Checks if the hub can be reserved at a specific time.
+
+        Args:
+            time (int): The turn number to check.
+
+        Returns:
+            bool: True if it can be reserved, False otherwise (e.g., if blocked or at capacity).
+        """
         return (
             self.__type is not HubType.BLOCKED
             and self.__reservations.get(time, 0)
@@ -337,6 +401,12 @@ class Hub(Zone):
         )
 
     def reserve(self, time: int) -> None:
+        """
+        Reserves the hub at the given time.
+
+        Args:
+            time (int): The turn number to reserve.
+        """
         self.__reservations[time] = (
             self.__reservations.get(time, 0) + 1
         )
@@ -344,12 +414,27 @@ class Hub(Zone):
     def nearest_reservation(
         self, start_time: int,
     ) -> int:
+        """
+        Finds the nearest future time from start_time when the hub can be reserved.
+
+        Args:
+            start_time (int): The time to start checking from.
+
+        Returns:
+            int: The first available time >= start_time.
+        """
         time = start_time
         while not self.can_reserve(time):
             time += 1
         return time
 
     def __str__(self) -> str:
+        """
+        Returns the string representation of the hub with ANSI color codes.
+
+        Returns:
+            str: The colored string representation.
+        """
         r, g, b, _ = self.__color
         return (
             f"\x1b[38;2;{r};{g};{b}m"
@@ -358,11 +443,26 @@ class Hub(Zone):
 
 
 class StartHub(Hub):
+    """
+    Represents the designated Start Hub.
+
+    Guarantees sufficient capacity for all initial drones.
+    """
     def __init__(
         self, name: str, x: int, y: int,
         nb_drones: int,
         metadata: Dict[str, HubMetaData],
     ) -> None:
+        """
+        Initializes the StartHub.
+
+        Args:
+            name (str): The name of the hub.
+            x (int): The x coordinate.
+            y (int): The y coordinate.
+            nb_drones (int): The total number of drones that start here.
+            metadata (Dict[str, HubMetaData]): Configuration metadata for the hub.
+        """
         metadata["max_drones"] = max(
             metadata.get("max_drones", nb_drones),
             nb_drones,
@@ -371,11 +471,26 @@ class StartHub(Hub):
 
 
 class EndHub(Hub):
+    """
+    Represents the designated End Hub.
+
+    Guarantees sufficient capacity for all incoming drones.
+    """
     def __init__(
         self, name: str, x: int, y: int,
         nb_drones: int,
         metadata: Dict[str, HubMetaData],
     ) -> None:
+        """
+        Initializes the EndHub.
+
+        Args:
+            name (str): The name of the hub.
+            x (int): The x coordinate.
+            y (int): The y coordinate.
+            nb_drones (int): The total number of drones that will end here.
+            metadata (Dict[str, HubMetaData]): Configuration metadata for the hub.
+        """
         metadata["max_drones"] = max(
             metadata.get("max_drones", nb_drones),
             nb_drones,

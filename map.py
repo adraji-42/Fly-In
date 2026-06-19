@@ -11,7 +11,18 @@ from exceptions import (
 
 
 class MapParser:
+    """
+    Parses a map file to extract configuration and map components.
+
+    Reads the drone count, hubs, and connections from the specified file.
+    """
     def __init__(self, map_path: str) -> None:
+        """
+        Initializes the MapParser with the file path.
+
+        Args:
+            map_path (str): The file path to the map configuration file.
+        """
         with open(map_path, 'r') as file:
             self.__content = file.readlines()
         self.h_factory = HubFactory()
@@ -20,6 +31,14 @@ class MapParser:
     def __lines(
         self,
     ) -> Generator[Tuple[int, str], None, None]:
+        """
+        Yields non-empty lines from the map file along with their line numbers.
+
+        Strips comments and ignores empty lines. Yields (-1, "") at the end of the file.
+
+        Yields:
+            Tuple[int, str]: A tuple containing the line number and the line content.
+        """
         for line_number, line in enumerate(
             self.__content, 1,
         ):
@@ -29,6 +48,17 @@ class MapParser:
         yield -1, ""
 
     def parse(self) -> MapAttributes:
+        """
+        Parses the map file content into map attributes.
+
+        Returns:
+            MapAttributes: A tuple containing the number of drones, the start hub,
+                a dictionary of normal hubs, and the end hub.
+
+        Raises:
+            MapFormatError: If there's a syntax or formatting error in the map file.
+            MapLogicError: If there's a logical error in the map definition (e.g. duplicate names).
+        """
         all_hubs: Dict[str, Hub] = dict()
         start_hub: Optional[StartHub] = None
         hubs: Dict[str, Hub] = dict()
@@ -239,7 +269,18 @@ class MapParser:
 
 
 class Map:
+    """
+    Represents the simulated map.
+
+    Contains the start hub, end hub, intermediate hubs, and the fleet of drones.
+    """
     def __init__(self, map_path: str) -> None:
+        """
+        Initializes the Map by parsing the given map file.
+
+        Args:
+            map_path (str): The file path to the map configuration file.
+        """
         self.__nb_drones: int
         self.__start_hub: StartHub
         self.__hubs: Dict[str, Hub]
@@ -259,20 +300,25 @@ class Map:
 
     @property
     def nb_drones(self) -> int:
+        """int: The number of drones configured for this map."""
         return self.__nb_drones
 
     @property
     def start_hub(self) -> StartHub:
+        """StartHub: The starting hub for all drones."""
         return self.__start_hub
 
     @property
     def hubs(self) -> Dict[str, Hub]:
+        """Dict[str, Hub]: A dictionary of intermediate and priority hubs mapped by their names."""
         return self.__hubs
 
     @property
     def end_hub(self) -> EndHub:
+        """EndHub: The destination hub for all drones."""
         return self.__end_hub
 
     @property
     def drones(self) -> List[Drone]:
+        """List[Drone]: The list of drones initialized for the simulation."""
         return self.__drones

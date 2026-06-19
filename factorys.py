@@ -5,8 +5,14 @@ from exceptions import MapLogicError, ErrorInfo
 
 
 class HubFactory:
+    """
+    Factory for creating Hub objects from map file lines.
+
+    Maintains a set of seen coordinates to detect duplicates.
+    """
 
     def __init__(self) -> None:
+        """Initializes the HubFactory."""
         self.__parser = HubParser()
         self.__seen: set[tuple[int, int]] = set()
 
@@ -14,6 +20,20 @@ class HubFactory:
         self, line: str,
         nb_drones: int, line_number: int,
     ) -> Hub:
+        """
+        Creates a Hub, StartHub, or EndHub instance from a parsed line.
+
+        Args:
+            line (str): The raw string line.
+            nb_drones (int): The number of drones (required for Start/End hubs).
+            line_number (int): The current line number.
+
+        Returns:
+            Hub: The instantiated Hub object.
+
+        Raises:
+            MapLogicError: If a hub is created at coordinates that are already in use.
+        """
         _type, name, x, y, metadata = (
             self.__parser.parse(line, line_number)
         )
@@ -55,8 +75,14 @@ class HubFactory:
 
 
 class ConnectionFactory:
+    """
+    Factory for creating Connection objects and linking hubs.
+
+    Maintains a set of seen connection pairs to detect duplicates.
+    """
 
     def __init__(self) -> None:
+        """Initializes the ConnectionFactory."""
         self.__parser = ConnectionParser()
         self.__seen: set[frozenset[str]] = set()
 
@@ -64,6 +90,17 @@ class ConnectionFactory:
         self, line: str,
         zones: Dict[str, Hub], line_number: int,
     ) -> None:
+        """
+        Creates connections between two hubs and registers them in both hubs.
+
+        Args:
+            line (str): The raw string line.
+            zones (Dict[str, Hub]): A dictionary of previously instantiated hubs.
+            line_number (int): The current line number.
+
+        Raises:
+            MapLogicError: If the connection is a self-loop, links undefined hubs, or is a duplicate.
+        """
         zone1, zone2, max_link_capacity = (
             self.__parser.parse(line, line_number)
         )

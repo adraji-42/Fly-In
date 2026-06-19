@@ -9,16 +9,39 @@ from typing import List, cast, Optional
 
 @dataclass(slots=True, frozen=True)
 class DroneEvent:
+    """
+    Represents an event corresponding to a drone arriving at a specific token (hub or connection) at a certain time.
+
+    Attributes:
+        time (int): The turn number when this event occurs.
+        token (str): The string representation of the hub or connection the drone reaches.
+    """
     time: int
     token: str
 
 
 class DroneScheduler:
+    """
+    Handles scheduling of a drone's path.
+    """
 
     @staticmethod
     def schedule(
         drone: Drone, time: int = 0,
     ) -> None:
+        """
+        Schedules a single drone from its current hub to the end hub.
+
+        Finds a path and reserves the appropriate hubs and connections, generating
+        events for the drone's movements.
+
+        Args:
+            drone (Drone): The drone to be scheduled.
+            time (int): The starting time for the drone's schedule. Defaults to 0.
+
+        Raises:
+            MapLogicError: If no valid path can be found for the drone.
+        """
         path: Optional[Path] = PathFinder.find_path(
             drone.current_hub, time,
         )
@@ -66,21 +89,47 @@ class DroneScheduler:
 
 
 class Drone:
+    """
+    Represents a drone navigating the map.
+
+    Tracks its ID, current hub location, and scheduled events over time.
+    """
     def __init__(self, drone_id: int, current_hub: Hub) -> None:
+        """
+        Initializes a Drone instance.
+
+        Args:
+            drone_id (int): The unique identifier of the drone.
+            current_hub (Hub): The hub where the drone initially spawns.
+        """
         self.__id = drone_id
         self.current_hub: Hub = current_hub
         self.__events: List[DroneEvent] = []
 
     @property
     def id(self) -> int:
+        """int: The unique identifier of the drone."""
         return self.__id
 
     @property
     def events(self) -> List[DroneEvent]:
+        """List[DroneEvent]: The list of events generated for this drone's path."""
         return self.__events
 
     def add_event(self, event: DroneEvent) -> None:
+        """
+        Adds a new scheduling event to the drone's event list.
+
+        Args:
+            event (DroneEvent): The event to add.
+        """
         self.__events.append(event)
 
     def __str__(self) -> str:
+        """
+        Returns the string representation of the drone.
+
+        Returns:
+            str: The string representation, e.g. "D1".
+        """
         return f"D{self.__id}"
