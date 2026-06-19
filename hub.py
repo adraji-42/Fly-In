@@ -40,7 +40,7 @@ class HubParser(ZoneParser):
                         )
                     )
 
-                key = match.group("key")
+                key = match.group("key").lower()
                 value = match.group("value")
                 key_pos = line.find(key, search_from)
                 val_pos = line.find(
@@ -53,7 +53,7 @@ class HubParser(ZoneParser):
 
                 if key == "zone":
                     try:
-                        metadata[key] = HubType(value)
+                        metadata[key] = HubType(value.lower())
                     except ValueError:
                         raise MapFormatError(ErrorInfo(
                             line_number=line_number,
@@ -94,7 +94,7 @@ class HubParser(ZoneParser):
                                 " the color value"
                             ),
                         ))
-                    metadata[key] = value
+                    metadata[key] = value.lower()
                 elif key == "max_drones":
                     try:
                         max_drones = int(value)

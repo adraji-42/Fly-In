@@ -31,7 +31,7 @@ class ConnectionParser:
                     )
                 )
 
-            key = match.group("key")
+            key = match.group("key").lower()
             value = match.group("value")
             key_pos = line.find(key, metadata_offset)
             val_pos = line.find(

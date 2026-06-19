@@ -31,7 +31,7 @@ class HubRegex(ZoneRegex):
 class ConnectionRegex:
 
     CONNECTION_LINE: Pattern[str] = compile(
-        r"^\s*connection\s*:\s*(?P<zone1>[^-\s]+)\s*-\s*"
+        r"^\s*(?P<connection>[^:\s]+)\s*:\s*(?P<zone1>[^-\s]+)\s*-\s*"
         r"(?P<zone2>\S+)"
         r"(?:\s+\[(?P<metadata>[^\]]*)\])?\s*$"
     )
