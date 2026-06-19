@@ -20,32 +20,29 @@ class BaseMapProjectError(Exception):
 
 class MapLogicError(BaseMapProjectError):
     def __str__(self) -> str:
-        i = self.info
         return (
-            f"invalid line numbered {i.line_number}\n"
-            f"the reason is {i.reason}\n"
-            f"expected is {i.expected}\n"
-            f"how to fix it {i.how_to_fix}"
+            f"invalid line numbered {self.info.line_number}\n"
+            f"the reason is {self.info.reason}\n"
+            f"expected is {self.info.expected}\n"
+            f"how to fix it {self.info.how_to_fix}"
         )
 
 
 class MapFormatError(BaseMapProjectError):
     def __str__(self) -> str:
-        i = self.info
-        s = max(0, min(i.error_start, len(i.line_content)))
-        e = max(s, min(i.error_end, len(i.line_content)))
-        lc = i.line_content
+        s = max(0, min(self.info.error_start, len(self.info.line_content)))
+        e = max(s, min(self.info.error_end, len(self.info.line_content)))
         styled = (
-            f"\x1b[31m{lc[:s]}"
-            f"\x1b[37;41m{lc[s:e]}\x1b[0m"
-            f"\x1b[31m{lc[e:]}\x1b[0m"
+            f"\x1b[31m{self.info.line_content[:s]}"
+            f"\x1b[37;41m{self.info.line_content[s:e]}\x1b[0m"
+            f"\x1b[31m{self.info.line_content[e:]}\x1b[0m"
         )
         return (
-            f"invalid line numbered {i.line_number}, "
+            f"invalid line numbered {self.info.line_number}, "
             f"line: {styled}\n"
-            f"the reason is {i.reason}\n"
-            f"expected {i.expected}\n"
-            f"to fix it {i.how_to_fix}"
+            f"the reason is {self.info.reason}\n"
+            f"expected {self.info.expected}\n"
+            f"to fix it {self.info.how_to_fix}"
         )
 
 
@@ -65,7 +62,7 @@ class HubLineInspector:
                 error_start=0,
                 error_end=len(line),
                 reason=(
-                    "hub line is missing the colon separator"
+                    "hub line is missing the colon separator ':'"
                 ),
                 expected="hub_type: name x y [metadata]",
                 how_to_fix=(
@@ -100,25 +97,18 @@ class HubLineInspector:
             )
 
         if len(tokens) < 3:
-            last_token = tokens[-1]
-            last_pos = line.find(
-                last_token, prefix + colon_idx
-            )
-            err_start = last_pos + len(last_token)
             return ErrorInfo(
                 line_number=line_number,
                 line_content=line,
-                error_start=err_start,
-                error_end=max(
-                    err_start + 1, len(line.rstrip())
-                ),
+                error_start=-1,
+                error_end=-1,
                 reason=(
                     "the hub must have coordinates"
                     " x and y after name"
                     if len(tokens) == 1
                     else "the hub is missing the y coordinate"
                 ),
-                expected="hub_type: name x y [metadata]",
+                expected="hub_type: name x y [metadata: key=value ...]",
                 how_to_fix=(
                     "add the missing coordinate(s)"
                     " after the hub name"
@@ -145,7 +135,7 @@ class HubLineInspector:
             error_start=0,
             error_end=len(line),
             reason="hub line format is invalid",
-            expected="hub_type: name x y [metadata]",
+            expected="hub_type: name x y [metadata: key=value ...]",
             how_to_fix=(
                 "rewrite the line using"
                 " the correct hub format"
@@ -207,7 +197,7 @@ class HubMetadataInspector:
             error_start=pos,
             error_end=pos + len(stripped),
             reason="the metadata format is invalid",
-            expected="space-separated key=value pairs",
+            expected="pairs of key=value separated by spaces",
             how_to_fix=(
                 "rewrite metadata as key=value pairs"
             ),
@@ -234,7 +224,7 @@ class ConnectionLineInspector:
                     " the colon separator"
                 ),
                 expected=(
-                    "connection: zone1-zone2 [metadata]"
+                    "connection: zone1-zone2 [metadata: key=value ...]"
                 ),
                 how_to_fix=(
                     "add a colon after"
@@ -287,7 +277,7 @@ class ConnectionLineInspector:
             error_end=len(line),
             reason="connection line format is invalid",
             expected=(
-                "connection: zone1-zone2 [metadata]"
+                "connection: zone1-zone2 [metadata: key=value ...]"
             ),
             how_to_fix=(
                 "rewrite the line using"

@@ -18,7 +18,7 @@ class HubRegex(ZoneRegex):
     HUB_LINE: Pattern[str] = compile(
         r"^\s*(?P<type>[^:\s]+)\s*:\s*"
         r"(?P<name>\S+)\s+(?P<x>\S+)\s+"
-        r"(?P<y>\S+)(?:\s*\[(?P<metadata>[^\]]*)\])?\s*$"
+        r"(?P<y>\S+)(?:\s+\[(?P<metadata>[^\]]*)\])?\s*$"
     )
     HUB_TYPE: Pattern[str] = compile(r"^(start_hub|end_hub|hub)$")
 
@@ -32,8 +32,8 @@ class ConnectionRegex:
 
     CONNECTION_LINE: Pattern[str] = compile(
         r"^\s*connection\s*:\s*(?P<zone1>[^-\s]+)\s*-\s*"
-        r"(?P<zone2>[^\s\[]+)"
-        r"(?:\s*\[(?P<metadata>[^\]]*)\])?\s*$"
+        r"(?P<zone2>\S+)"
+        r"(?:\s+\[(?P<metadata>[^\]]*)\])?\s*$"
     )
 
     CONNECTION_METADATA: Pattern[str] = compile(
