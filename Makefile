@@ -1,5 +1,6 @@
 REMAINING_GOALS = $(filter-out clean lint lint-strict install,$(MAKECMDGOALS))
 
+
 ifeq ($(MAKECMDGOALS),)
     REMAINING_GOALS = all
 endif
@@ -9,6 +10,7 @@ ifneq ($(REMAINING_GOALS),)
         $(error MAP variable is required to use target $(REMAINING_GOALS). Usage: make MAP=path/to/map.txt)
     endif
 endif
+
 
 all: install lint run
 

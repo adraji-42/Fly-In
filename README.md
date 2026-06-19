@@ -7,7 +7,7 @@ The goal of this project is to design a system that efficiently routes a fleet o
 
 ## Instructions
 ### Compilation & Installation
-Ensure you have Python 3.10+ installed. This project uses `poetry` for dependency management.
+Ensure you have Python 3.12+ installed. This project uses `poetry` for dependency management.
 To install all necessary dependencies, use the provided Makefile:
 ```bash
 make install
@@ -38,5 +38,6 @@ The core routing strategy utilizes a graph pathfinding approach, avoiding third-
 The simulation outputs a standard turn-by-turn text-based history showing `D<ID>-<zone>` formats as required. In addition, the graph components encapsulate standard color metadata attributes that can integrate easily into terminal colors or a PyGame visual representation (as implemented in `pygame`). When outputting via console, ANSI escape codes translate hub colors directly into the user interface to enhance readability and user experience.
 
 ## Resources
-- Documentation on Python's `typing` module for static analysis.
-- AI was used as a pair-programming partner during development, specifically focusing on building a robust, flat exception hierarchy, optimizing the parser logic, and enforcing Flake8 standards throughout the codebase without adding overhead code.
+- [Medium](https://medium.com/basecs/a-gentle-introduction-to-graph-theory-77969829ead8)
+### AI Using
+- I used AI to develop the idea of ​​the algorithm that came to me at the beginning of my work on this project, by giving it an initial idea of ​​the algorithm, then taking care of the problems that I had to solve or that I would face, and so on until I arrived at this algorithm.
