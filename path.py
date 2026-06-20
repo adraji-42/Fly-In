@@ -60,10 +60,16 @@ class PathFinder:
             int: The number of turns to wait.
         """
         wait_cost = 0
+        cost = cast(int, connection.hub_to.cost)
         while (
-            not connection.can_reserve(current_cost + wait_cost)
+            not all(
+                connection.can_reserve(
+                    current_cost + wait_cost + t
+                )
+                for t in range(cost)
+            )
             or not connection.hub_to.can_reserve(
-                current_cost + cast(int, connection.hub_to.cost) + wait_cost
+                current_cost + cost + wait_cost
             )
         ):
             wait_cost += 1
@@ -123,12 +129,11 @@ class PathFinder:
                     current_cost + next_wait + cast(int, neighbour.cost)
                 )
 
-                if current == start_hub:
-                    next_priority = (
-                        0 if neighbour.type is HubType.PRIORITY else priority
-                    )
-                else:
-                    next_priority = priority
+                next_priority = priority - (
+                    1 if neighbour.type
+                    is HubType.PRIORITY else 0
+                )
+                if current != start_hub:
                     next_wait = wait
 
                 if next_cost not in buckets:

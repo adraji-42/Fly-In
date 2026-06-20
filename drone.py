@@ -70,13 +70,17 @@ class DroneScheduler:
 
             cost = cast(int, next_hub.cost)
             while (
-                not connection.can_reserve(time)
+                not all(
+                    connection.can_reserve(time + t)
+                    for t in range(cost)
+                )
                 or not next_hub.can_reserve(time + cost)
             ):
                 current.reserve(time)
                 time += 1
 
-            connection.reserve(time)
+            for t in range(cost):
+                connection.reserve(time + t)
             next_hub.reserve(time + cost)
 
             if cost == 2:
