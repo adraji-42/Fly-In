@@ -66,7 +66,8 @@ class Zone:
 
     @property
     def connections(self) -> Dict[str, "Connection"]:
-        """Dict[str, 'Connection']: The outbound connections from this zone mapped by destination name."""
+        """Dict[str, 'Connection']: The outbound connections from this zone
+        mapped by destination name."""
         return self.__connections
 
     def connect(self, connection: "Connection") -> None:

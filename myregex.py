@@ -5,6 +5,7 @@ class MapRegex:
     """
     Regex patterns for general map configuration lines.
     """
+
     NB_DRONS: Pattern[str] = compile(
         r"^\s*(?P<key>[^\s:]+)\s*:\s*(?P<value>\S+)\s*$"
     )

@@ -15,6 +15,7 @@ class ErrorInfo:
         expected (str): What was expected instead.
         how_to_fix (str): Suggestion on how to fix the error.
     """
+
     line_number: int
     line_content: str
     error_start: int
@@ -28,6 +29,7 @@ class BaseMapProjectError(Exception):
     """
     Base exception class for all custom exceptions in this project.
     """
+
     def __init__(self, info: ErrorInfo) -> None:
         """
         Initializes the base error.
@@ -41,8 +43,10 @@ class BaseMapProjectError(Exception):
 
 class MapLogicError(BaseMapProjectError):
     """
-    Exception raised for logical errors in the map definition (e.g., duplicate names, self-loops).
+    Exception raised for logical errors in the map definition (e.g., duplicate
+    names, self-loops).
     """
+
     def __str__(self) -> str:
         """
         Returns a formatted string describing the logic error.
@@ -62,9 +66,11 @@ class MapFormatError(BaseMapProjectError):
     """
     Exception raised for formatting and syntax errors in the map file.
     """
+
     def __str__(self) -> str:
         """
-        Returns a formatted string describing the format error, with ANSI styling indicating the location.
+        Returns a formatted string describing the format error, with ANSI
+        styling indicating the location.
 
         Returns:
             str: The styled error message.
@@ -87,12 +93,12 @@ class MapFormatError(BaseMapProjectError):
 
 class HubLineInspector:
     """
-    Inspector to analyze malformed hub lines and provide specific error details.
+    Inspector to analyze malformed hub lines and provide specific error
+    details.
     """
+
     @staticmethod
-    def inspect(
-        line: str, line_number: int
-    ) -> ErrorInfo:
+    def inspect(line: str, line_number: int) -> ErrorInfo:
         """
         Inspects a broken hub line to diagnose the formatting error.
 
@@ -113,13 +119,9 @@ class HubLineInspector:
                 line_content=line,
                 error_start=0,
                 error_end=len(line),
-                reason=(
-                    "hub line is missing the colon separator ':'"
-                ),
+                reason=("hub line is missing the colon separator ':'"),
                 expected="hub_type: name x y [metadata]",
-                how_to_fix=(
-                    "add a colon after the hub type keyword"
-                ),
+                how_to_fix=("add a colon after the hub type keyword"),
             )
 
         rest = stripped[colon_idx + 1:].strip()
@@ -138,13 +140,10 @@ class HubLineInspector:
                 line_content=line,
                 error_start=err_start,
                 error_end=len(line),
-                reason=(
-                    "hub name and coordinates are missing"
-                ),
+                reason=("hub name and coordinates are missing"),
                 expected="name x y after the colon",
                 how_to_fix=(
-                    "add a hub name followed by"
-                    " x and y coordinates"
+                    "add a hub name followed by x and y coordinates"
                 ),
             )
 
@@ -155,15 +154,13 @@ class HubLineInspector:
                 error_start=-1,
                 error_end=-1,
                 reason=(
-                    "the hub must have coordinates"
-                    " x and y after name"
+                    "the hub must have coordinates x and y after name"
                     if len(tokens) == 1
                     else "the hub is missing the y coordinate"
                 ),
                 expected="hub_type: name x y [metadata: key=value ...]",
                 how_to_fix=(
-                    "add the missing coordinate(s)"
-                    " after the hub name"
+                    "add the missing coordinate(s) after the hub name"
                 ),
             )
 
@@ -175,9 +172,7 @@ class HubLineInspector:
                 error_start=bracket_pos,
                 error_end=len(line),
                 reason="metadata bracket is not closed",
-                expected=(
-                    "matching ] to close the metadata block"
-                ),
+                expected=("matching ] to close the metadata block"),
                 how_to_fix="add a closing ] bracket",
             )
 
@@ -188,21 +183,19 @@ class HubLineInspector:
             error_end=len(line),
             reason="hub line format is invalid",
             expected="hub_type: name x y [metadata: key=value ...]",
-            how_to_fix=(
-                "rewrite the line using"
-                " the correct hub format"
-            ),
+            how_to_fix=("rewrite the line using the correct hub format"),
         )
 
 
 class HubMetadataInspector:
     """
-    Inspector to analyze malformed hub metadata blocks and provide error details.
+    Inspector to analyze malformed hub metadata blocks and provide error
+    details.
     """
+
     @staticmethod
     def inspect(
-        line: str, metadata: str,
-        line_number: int, metadata_offset: int
+        line: str, metadata: str, line_number: int, metadata_offset: int
     ) -> ErrorInfo:
         """
         Inspects a broken hub metadata block to diagnose the formatting error.
@@ -211,7 +204,8 @@ class HubMetadataInspector:
             line (str): The malformed line.
             metadata (str): The malformed metadata string.
             line_number (int): The line number.
-            metadata_offset (int): The character offset of the metadata in the line.
+            metadata_offset (int): The character offset of the metadata in the
+                line.
 
         Returns:
             ErrorInfo: Detailed diagnostics of the error.
@@ -227,12 +221,8 @@ class HubMetadataInspector:
                 error_start=bs if bs >= 0 else 0,
                 error_end=max(be, (bs + 1) if bs >= 0 else 0),
                 reason="the metadata block is empty",
-                expected=(
-                    "key=value pairs or no brackets at all"
-                ),
-                how_to_fix=(
-                    "remove the empty brackets or add metadata"
-                ),
+                expected=("key=value pairs or no brackets at all"),
+                how_to_fix=("remove the empty brackets or add metadata"),
             )
 
         if "=" not in stripped:
@@ -244,15 +234,9 @@ class HubMetadataInspector:
                 line_content=line,
                 error_start=pos,
                 error_end=pos + len(stripped),
-                reason=(
-                    "metadata is missing the = separator"
-                ),
-                expected=(
-                    "key=value pairs like zone=normal"
-                ),
-                how_to_fix=(
-                    "add = between key and value in metadata"
-                ),
+                reason=("metadata is missing the = separator"),
+                expected=("key=value pairs like zone=normal"),
+                how_to_fix=("add = between key and value in metadata"),
             )
 
         pos = line.find(stripped, metadata_offset)
@@ -265,20 +249,18 @@ class HubMetadataInspector:
             error_end=pos + len(stripped),
             reason="the metadata format is invalid",
             expected="pairs of key=value separated by spaces",
-            how_to_fix=(
-                "rewrite metadata as key=value pairs"
-            ),
+            how_to_fix=("rewrite metadata as key=value pairs"),
         )
 
 
 class ConnectionLineInspector:
     """
-    Inspector to analyze malformed connection lines and provide specific error details.
+    Inspector to analyze malformed connection lines and provide specific error
+    details.
     """
+
     @staticmethod
-    def inspect(
-        line: str, line_number: int
-    ) -> ErrorInfo:
+    def inspect(line: str, line_number: int) -> ErrorInfo:
         """
         Inspects a broken connection line to diagnose the formatting error.
 
@@ -299,17 +281,9 @@ class ConnectionLineInspector:
                 line_content=line,
                 error_start=0,
                 error_end=len(line),
-                reason=(
-                    "connection line is missing"
-                    " the colon separator"
-                ),
-                expected=(
-                    "connection: zone1-zone2 [metadata: key=value ...]"
-                ),
-                how_to_fix=(
-                    "add a colon after"
-                    " the connection keyword"
-                ),
+                reason=("connection line is missing the colon separator"),
+                expected=("connection: zone1-zone2 [metadata: key=value ...]"),
+                how_to_fix=("add a colon after the connection keyword"),
             )
 
         rest = stripped[colon_idx + 1:].strip()
@@ -323,16 +297,12 @@ class ConnectionLineInspector:
                 error_end=len(line),
                 reason="connection zones are missing",
                 expected="zone1-zone2 after the colon",
-                how_to_fix=(
-                    "add two zone names separated by a dash"
-                ),
+                how_to_fix=("add two zone names separated by a dash"),
             )
 
         before_bracket = rest.split("[")[0].strip()
         if "-" not in before_bracket:
-            pos = line.find(
-                before_bracket, prefix + colon_idx
-            )
+            pos = line.find(before_bracket, prefix + colon_idx)
             if pos == -1:
                 pos = prefix + colon_idx + 1
             return ErrorInfo(
@@ -340,14 +310,9 @@ class ConnectionLineInspector:
                 line_content=line,
                 error_start=pos,
                 error_end=pos + len(before_bracket),
-                reason=(
-                    "connection is missing"
-                    " the dash separator"
-                ),
+                reason=("connection is missing the dash separator"),
                 expected="zone1-zone2",
-                how_to_fix=(
-                    "separate the two zone names with a dash"
-                ),
+                how_to_fix=("separate the two zone names with a dash"),
             )
 
         return ErrorInfo(
@@ -356,33 +321,33 @@ class ConnectionLineInspector:
             error_start=0,
             error_end=len(line),
             reason="connection line format is invalid",
-            expected=(
-                "connection: zone1-zone2 [metadata: key=value ...]"
-            ),
+            expected=("connection: zone1-zone2 [metadata: key=value ...]"),
             how_to_fix=(
-                "rewrite the line using"
-                " the correct connection format"
+                "rewrite the line using the correct connection format"
             ),
         )
 
 
 class ConnectionMetadataInspector:
     """
-    Inspector to analyze malformed connection metadata blocks and provide error details.
+    Inspector to analyze malformed connection metadata blocks and provide error
+    details.
     """
+
     @staticmethod
     def inspect(
-        line: str, metadata: str,
-        line_number: int, metadata_offset: int
+        line: str, metadata: str, line_number: int, metadata_offset: int
     ) -> ErrorInfo:
         """
-        Inspects a broken connection metadata block to diagnose the formatting error.
+        Inspects a broken connection metadata block to diagnose the formatting
+        error.
 
         Args:
             line (str): The malformed line.
             metadata (str): The malformed metadata string.
             line_number (int): The line number.
-            metadata_offset (int): The character offset of the metadata in the line.
+            metadata_offset (int): The character offset of the metadata in the
+                line.
 
         Returns:
             ErrorInfo: Detailed diagnostics of the error.
@@ -398,13 +363,8 @@ class ConnectionMetadataInspector:
                 error_start=bs if bs >= 0 else 0,
                 error_end=max(be, (bs + 1) if bs >= 0 else 0),
                 reason="the metadata block is empty",
-                expected=(
-                    "max_link_capacity=<positive integer>"
-                ),
-                how_to_fix=(
-                    "remove the empty brackets or"
-                    " add metadata"
-                ),
+                expected=("max_link_capacity=<positive integer>"),
+                how_to_fix=("remove the empty brackets or add metadata"),
             )
 
         if "=" not in stripped:
@@ -416,15 +376,9 @@ class ConnectionMetadataInspector:
                 line_content=line,
                 error_start=pos,
                 error_end=pos + len(stripped),
-                reason=(
-                    "metadata is missing the = separator"
-                ),
-                expected=(
-                    "max_link_capacity=<positive integer>"
-                ),
-                how_to_fix=(
-                    "add = between key and value in metadata"
-                ),
+                reason=("metadata is missing the = separator"),
+                expected=("max_link_capacity=<positive integer>"),
+                how_to_fix=("add = between key and value in metadata"),
             )
 
         pos = line.find(stripped, metadata_offset)
@@ -436,23 +390,19 @@ class ConnectionMetadataInspector:
             error_start=pos,
             error_end=pos + len(stripped),
             reason="the metadata format is invalid",
-            expected=(
-                "max_link_capacity=<positive integer>"
-            ),
-            how_to_fix=(
-                "rewrite as max_link_capacity=<number>"
-            ),
+            expected=("max_link_capacity=<positive integer>"),
+            how_to_fix=("rewrite as max_link_capacity=<number>"),
         )
 
 
 class NbDronesLineInspector:
     """
-    Inspector to analyze malformed nb_drones lines and provide specific error details.
+    Inspector to analyze malformed nb_drones lines and provide specific error
+    details.
     """
+
     @staticmethod
-    def inspect(
-        line: str, line_number: int
-    ) -> ErrorInfo:
+    def inspect(line: str, line_number: int) -> ErrorInfo:
         """
         Inspects a broken nb_drones line to diagnose the formatting error.
 
@@ -471,14 +421,9 @@ class NbDronesLineInspector:
                 line_content=line,
                 error_start=0,
                 error_end=len(line),
-                reason=(
-                    "the line is missing"
-                    " the colon separator"
-                ),
+                reason=("the line is missing the colon separator"),
                 expected="nb_drones: <positive integer>",
-                how_to_fix=(
-                    "rewrite as nb_drones: <number>"
-                ),
+                how_to_fix=("rewrite as nb_drones: <number>"),
             )
 
         return ErrorInfo(
@@ -486,10 +431,7 @@ class NbDronesLineInspector:
             line_content=line,
             error_start=0,
             error_end=len(line),
-            reason=(
-                "the line does not match"
-                " the drone count format"
-            ),
+            reason=("the line does not match the drone count format"),
             expected="nb_drones: <positive integer>",
             how_to_fix="rewrite as nb_drones: <number>",
         )

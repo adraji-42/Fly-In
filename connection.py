@@ -4,7 +4,8 @@ from typing import Dict, Optional
 from mytypes import ConnectionAttribute
 from myregex import ConnectionRegex
 from exceptions import (
-    MapFormatError, ErrorInfo,
+    MapFormatError,
+    ErrorInfo,
     ConnectionLineInspector,
     ConnectionMetadataInspector,
 )
@@ -14,111 +15,109 @@ class ConnectionParser:
     """
     Parser for connection definitions in the map file.
 
-    Extracts connection attributes including the linked zones, capacity, and metadata.
+    Extracts connection attributes including the linked zones, capacity,
+    and metadata.
     """
 
     class ConnectionMetaDataParser:
         """
-        Sub-parser for handling the metadata block within a connection definition line.
+        Sub-parser for handling the metadata block within a connection
+        definition line.
         """
 
         @staticmethod
         def parse(
-            line: str, metadata_str: str,
-            line_number: int, metadata_offset: int,
+            line: str,
+            metadata_str: str,
+            line_number: int,
+            metadata_offset: int,
         ) -> int:
             """
-            Parses the metadata string for a connection to extract max link capacity.
+            Parses the metadata string for a connection to extract max link
+            capacity.
 
             Args:
                 line (str): The original line from the map file.
-                metadata_str (str): The extracted metadata string (content inside brackets).
+                metadata_str (str): The extracted metadata string (content
+                    inside brackets).
                 line_number (int): The current line number in the file.
-                metadata_offset (int): The character offset where metadata begins in the line.
+                metadata_offset (int): The character offset where metadata
+                    begins in the line.
 
             Returns:
                 int: The maximum link capacity parsed from metadata.
 
             Raises:
-                MapFormatError: If the metadata format is invalid, missing, or contains invalid capacity values.
+                MapFormatError: If the metadata format is invalid, missing,
+                    or contains invalid capacity values.
             """
-            match = ConnectionRegex.CONNECTION_METADATA.match(
-                metadata_str
-            )
+            match = ConnectionRegex.CONNECTION_METADATA.match(metadata_str)
 
             if not match:
                 raise MapFormatError(
                     ConnectionMetadataInspector.inspect(
-                        line, metadata_str,
-                        line_number, metadata_offset,
+                        line,
+                        metadata_str,
+                        line_number,
+                        metadata_offset,
                     )
                 )
 
             key = match.group("key").lower()
             value = match.group("value")
             key_pos = line.find(key, metadata_offset)
-            val_pos = line.find(
-                value, key_pos + len(key)
-            )
+            val_pos = line.find(value, key_pos + len(key))
 
             if key != "max_link_capacity":
-                raise MapFormatError(ErrorInfo(
-                    line_number=line_number,
-                    line_content=line,
-                    error_start=key_pos,
-                    error_end=key_pos + len(key),
-                    reason=(
-                        f"'{key}' is not a valid"
-                        " connection metadata key"
-                    ),
-                    expected="max_link_capacity",
-                    how_to_fix=(
-                        "rename the key"
-                        " to max_link_capacity"
-                    ),
-                ))
+                raise MapFormatError(
+                    ErrorInfo(
+                        line_number=line_number,
+                        line_content=line,
+                        error_start=key_pos,
+                        error_end=key_pos + len(key),
+                        reason=(
+                            f"'{key}' is not a valid"
+                            " connection metadata key"
+                        ),
+                        expected="max_link_capacity",
+                        how_to_fix=("rename the key" " to max_link_capacity"),
+                    )
+                )
 
             try:
                 capacity = int(value)
             except ValueError:
-                raise MapFormatError(ErrorInfo(
-                    line_number=line_number,
-                    line_content=line,
-                    error_start=val_pos,
-                    error_end=val_pos + len(value),
-                    reason=(
-                        f"'{value}' is not"
-                        " a valid integer"
-                    ),
-                    expected="a positive integer",
-                    how_to_fix=(
-                        "replace with a positive integer"
-                    ),
-                ))
+                raise MapFormatError(
+                    ErrorInfo(
+                        line_number=line_number,
+                        line_content=line,
+                        error_start=val_pos,
+                        error_end=val_pos + len(value),
+                        reason=(f"'{value}' is not" " a valid integer"),
+                        expected="a positive integer",
+                        how_to_fix=("replace with a positive integer"),
+                    )
+                )
 
             if capacity <= 0:
-                raise MapFormatError(ErrorInfo(
-                    line_number=line_number,
-                    line_content=line,
-                    error_start=val_pos,
-                    error_end=val_pos + len(value),
-                    reason=(
-                        f"'{value}' must be"
-                        " greater than 0"
-                    ),
-                    expected=(
-                        "a positive integer"
-                        " greater than 0"
-                    ),
-                    how_to_fix=(
-                        "use a number greater than 0"
-                    ),
-                ))
+                raise MapFormatError(
+                    ErrorInfo(
+                        line_number=line_number,
+                        line_content=line,
+                        error_start=val_pos,
+                        error_end=val_pos + len(value),
+                        reason=(f"'{value}' must be" " greater than 0"),
+                        expected=("a positive integer" " greater than 0"),
+                        how_to_fix=("use a number greater than 0"),
+                    )
+                )
 
             return capacity
 
     def parse(
-        self, line: str, line_number: int,
+        self,
+        line: str,
+        line_number: int,
     ) -> ConnectionAttribute:
         """
         Parses a full connection definition line.
@@ -128,19 +127,22 @@ class ConnectionParser:
             line_number (int): The line number in the map file.
 
         Returns:
-            ConnectionAttribute: A tuple containing zone1, zone2, and the max link capacity.
+            ConnectionAttribute: A tuple containing zone1, zone2, and the
+                max link capacity.
 
         Raises:
-            MapFormatError: If the line format is invalid or missing required components.
+            MapFormatError: If the line format is invalid or missing required
+                components.
         """
-        match: Optional[Match[str]] = (
-            ConnectionRegex.CONNECTION_LINE.match(line)
+        match: Optional[Match[str]] = ConnectionRegex.CONNECTION_LINE.match(
+            line
         )
 
         if not match:
             raise MapFormatError(
                 ConnectionLineInspector.inspect(
-                    line, line_number,
+                    line,
+                    line_number,
                 )
             )
 
@@ -152,39 +154,40 @@ class ConnectionParser:
         if metadata_str is not None:
             if not metadata_str.strip():
                 bracket_start = line.find("[")
-                bracket_end = line.find(
-                    "]", bracket_start,
-                ) + 1
-                raise MapFormatError(ErrorInfo(
-                    line_number=line_number,
-                    line_content=line,
-                    error_start=bracket_start,
-                    error_end=bracket_end,
-                    reason=(
-                        "the metadata block is empty"
-                    ),
-                    expected=(
-                        "max_link_capacity="
-                        "<positive integer>"
-                        " or no brackets"
-                    ),
-                    how_to_fix=(
-                        "remove empty brackets"
-                        " or add metadata"
-                    ),
-                ))
+                bracket_end = (
+                    line.find(
+                        "]",
+                        bracket_start,
+                    )
+                    + 1
+                )
+                raise MapFormatError(
+                    ErrorInfo(
+                        line_number=line_number,
+                        line_content=line,
+                        error_start=bracket_start,
+                        error_end=bracket_end,
+                        reason=("the metadata block is empty"),
+                        expected=(
+                            "max_link_capacity="
+                            "<positive integer>"
+                            " or no brackets"
+                        ),
+                        how_to_fix=(
+                            "remove empty brackets" " or add metadata"
+                        ),
+                    )
+                )
             else:
                 raw = metadata_str
                 stripped = raw.strip()
                 leading = len(raw) - len(raw.lstrip())
-                m_offset = (
-                    match.start("metadata") + leading
-                )
-                max_link_capacity = (
-                    self.ConnectionMetaDataParser.parse(
-                        line, stripped,
-                        line_number, m_offset,
-                    )
+                m_offset = match.start("metadata") + leading
+                max_link_capacity = self.ConnectionMetaDataParser.parse(
+                    line,
+                    stripped,
+                    line_number,
+                    m_offset,
                 )
 
         return zone1, zone2, max_link_capacity
@@ -196,8 +199,11 @@ class Connection:
 
     Manages the maximum link capacity and reservations on this link over time.
     """
+
     def __init__(
-        self, hub_from: Hub, hub_to: Hub,
+        self,
+        hub_from: Hub,
+        hub_to: Hub,
         max_link_capacity: int = 1,
     ) -> None:
         """
@@ -206,7 +212,8 @@ class Connection:
         Args:
             hub_from (Hub): The hub from which this connection originates.
             hub_to (Hub): The destination hub of this connection.
-            max_link_capacity (int): The maximum number of drones that can traverse this link concurrently. Defaults to 1.
+            max_link_capacity (int): The maximum number of drones that can
+                traverse this link concurrently. Defaults to 1.
         """
         self.__hub_from: str = str(hub_from)
         self.__hub_to: Hub = hub_to
@@ -238,10 +245,7 @@ class Connection:
         Returns:
             bool: True if there is remaining capacity, False otherwise.
         """
-        return (
-            self.__reservations.get(time, 0)
-            < self.__max_link_capacity
-        )
+        return self.__reservations.get(time, 0) < self.__max_link_capacity
 
     def reserve(self, time: int) -> bool:
         """
@@ -251,20 +255,21 @@ class Connection:
             time (int): The turn number to reserve.
 
         Returns:
-            bool: True if reservation was successful, False if it was already at max capacity.
+            bool: True if reservation was successful, False if it was already
+                at max capacity.
         """
         if not self.can_reserve(time):
             return False
-        self.__reservations[time] = (
-            self.__reservations.get(time, 0) + 1
-        )
+        self.__reservations[time] = self.__reservations.get(time, 0) + 1
         return True
 
     def nearest_reservation(
-        self, start_time: int,
+        self,
+        start_time: int,
     ) -> int:
         """
-        Finds the nearest future time from start_time when the connection can be reserved.
+        Finds the nearest future time from start_time when the connection can
+        be reserved.
 
         Args:
             start_time (int): The time to start checking from.

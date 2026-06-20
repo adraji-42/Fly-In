@@ -1,8 +1,8 @@
-from hub import EndHub, Hub
 from itertools import count
 from mytypes import HubType
 from connection import Connection
 from heapq import heappop, heappush
+from hub import Hub, EndHub
 from typing import Set, List, Dict, Tuple, Optional, cast
 
 
@@ -14,11 +14,8 @@ class Path:
         hubs (List[Hub]): The sequence of hubs comprising the path.
         base_cost (int): The starting cost/time when the path routing began.
     """
-    def __init__(
-        self,
-        hubs: List[Hub],
-        base_cost: int
-    ) -> None:
+
+    def __init__(self, hubs: List[Hub], base_cost: int) -> None:
         """
         Initializes a Path.
 
@@ -42,15 +39,15 @@ class Path:
 
 class PathFinder:
     """
-    Utility class for finding paths between hubs using Dijkstra's algorithm variant.
+    Utility class for finding paths between hubs using Dijkstra's algorithm
+    variant.
     """
+
     @staticmethod
-    def __wait_time(
-        current_cost: int,
-        connection: Connection
-    ) -> int:
+    def __wait_time(current_cost: int, connection: Connection) -> int:
         """
-        Calculates the waiting time required before a connection and its destination hub become available.
+        Calculates the waiting time required before a connection and its
+        destination hub become available.
 
         Args:
             current_cost (int): The current accumulated cost/time.
@@ -61,16 +58,11 @@ class PathFinder:
         """
         wait_cost = 0
         cost = cast(int, connection.hub_to.cost)
-        while (
-            not all(
-                connection.can_reserve(
-                    current_cost + wait_cost + t
-                )
-                for t in range(cost)
-            )
-            or not connection.hub_to.can_reserve(
-                current_cost + cost + wait_cost
-            )
+        while not all(
+            connection.can_reserve(current_cost + wait_cost + t)
+            for t in range(cost)
+        ) or not connection.hub_to.can_reserve(
+            current_cost + cost + wait_cost
         ):
             wait_cost += 1
         return wait_cost
@@ -95,8 +87,7 @@ class PathFinder:
 
         buckets[time] = []
         heappush(
-            buckets[time],
-            (1, 0, next(unique), start_hub, [start_hub], [])
+            buckets[time], (1, 0, next(unique), start_hub, [start_hub], [])
         )
         current_cost = time
 

@@ -10,12 +10,14 @@ class Simulation:
     Coordinates drones scheduling on the map and collects simulation events
     to generate chronological output turns.
     """
+
     def __init__(self, _map: Map) -> None:
         """
         Initializes the Simulation instance.
 
         Args:
-            _map (Map): The map instance containing hubs, connections, and drones.
+            _map (Map): The map instance containing hubs, connections,
+                and drones.
         """
         self.__map = _map
 
@@ -24,7 +26,8 @@ class Simulation:
         Runs the simulation and yields the output line for each turn.
 
         Yields:
-            str: A formatted string representing the moves of all drones during a single turn.
+            str: A formatted string representing the moves of all drones during
+                a single turn.
         """
         turns_moves: Dict[int, List[str]] = {}
         for drone in self.__map.drones:
@@ -35,4 +38,4 @@ class Simulation:
                 turns_moves[event.time].append(f"{drone}-{event.token}")
 
         for turn in sorted(turns_moves.keys()):
-            yield ' '.join(turns_moves[turn])
+            yield " ".join(turns_moves[turn])

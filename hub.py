@@ -4,8 +4,10 @@ from zone import Zone, ZoneParser
 from typing import Dict, cast, Optional
 from mytypes import HubType, HubAttribute, HubMetaData
 from exceptions import (
-    MapFormatError, ErrorInfo,
-    HubLineInspector, HubMetadataInspector,
+    MapFormatError,
+    ErrorInfo,
+    HubLineInspector,
+    HubMetadataInspector,
 )
 
 
@@ -18,34 +20,42 @@ class HubParser(ZoneParser):
 
     class HubMetaDataParser:
         """
-        Sub-parser for handling the metadata block within a hub definition line.
+        Sub-parser for handling the metadata block within a hub definition
+        line.
         """
 
         @staticmethod
         def parse(
-            line: str, metadata_str: str,
-            line_number: int, metadata_offset: int,
+            line: str,
+            metadata_str: str,
+            line_number: int,
+            metadata_offset: int,
         ) -> Dict[str, HubMetaData]:
             """
             Parses the metadata string into a dictionary of HubMetaData.
 
             Args:
                 line (str): The original line from the map file.
-                metadata_str (str): The extracted metadata string (content inside brackets).
+                metadata_str (str): The extracted metadata string (content
+                    inside brackets).
                 line_number (int): The current line number in the file.
-                metadata_offset (int): The character offset where metadata begins in the line.
+                metadata_offset (int): The character offset where metadata
+                    begins in the line.
 
             Returns:
                 Dict[str, HubMetaData]: The parsed metadata key-value pairs.
 
             Raises:
-                MapFormatError: If the metadata format is invalid or contains unexpected keys/values.
+                MapFormatError: If the metadata format is invalid or contains
+                    unexpected keys/values.
             """
             if not HubRegex.HUB_METADATA.match(metadata_str):
                 raise MapFormatError(
                     HubMetadataInspector.inspect(
-                        line, metadata_str,
-                        line_number, metadata_offset,
+                        line,
+                        metadata_str,
+                        line_number,
+                        metadata_offset,
                     )
                 )
 
@@ -58,134 +68,130 @@ class HubParser(ZoneParser):
                 if not match:
                     raise MapFormatError(
                         HubMetadataInspector.inspect(
-                            line, metadata_str,
-                            line_number, metadata_offset,
+                            line,
+                            metadata_str,
+                            line_number,
+                            metadata_offset,
                         )
                     )
 
                 key = match.group("key").lower()
                 value = match.group("value")
                 key_pos = line.find(key, search_from)
-                val_pos = line.find(
-                    value, key_pos + len(key)
-                )
+                val_pos = line.find(value, key_pos + len(key))
                 search_from = val_pos + len(value)
-                remaining = remaining[
-                    match.end():
-                ].strip()
+                remaining = remaining[match.end():].strip()
 
                 if key == "zone":
                     try:
                         metadata[key] = HubType(value.lower())
                     except ValueError:
-                        raise MapFormatError(ErrorInfo(
-                            line_number=line_number,
-                            line_content=line,
-                            error_start=val_pos,
-                            error_end=val_pos + len(value),
-                            reason=(
-                                f"'{value}' is not a"
-                                " valid zone type"
-                            ),
-                            expected=(
-                                "normal, blocked,"
-                                " restricted, or priority"
-                            ),
-                            how_to_fix=(
-                                f"replace '{value}' with"
-                                " a valid zone type"
-                            ),
-                        ))
+                        raise MapFormatError(
+                            ErrorInfo(
+                                line_number=line_number,
+                                line_content=line,
+                                error_start=val_pos,
+                                error_end=val_pos + len(value),
+                                reason=(
+                                    f"'{value}' is not a" " valid zone type"
+                                ),
+                                expected=(
+                                    "normal, blocked,"
+                                    " restricted, or priority"
+                                ),
+                                how_to_fix=(
+                                    f"replace '{value}' with"
+                                    " a valid zone type"
+                                ),
+                            )
+                        )
                 elif key == "color":
                     if not value.isalpha():
-                        raise MapFormatError(ErrorInfo(
-                            line_number=line_number,
-                            line_content=line,
-                            error_start=val_pos,
-                            error_end=val_pos + len(value),
-                            reason=(
-                                f"'{value}' is not a"
-                                " valid color name"
-                            ),
-                            expected=(
-                                "letters only, such as"
-                                " blue or red"
-                            ),
-                            how_to_fix=(
-                                "remove digits or"
-                                " punctuation from"
-                                " the color value"
-                            ),
-                        ))
+                        raise MapFormatError(
+                            ErrorInfo(
+                                line_number=line_number,
+                                line_content=line,
+                                error_start=val_pos,
+                                error_end=val_pos + len(value),
+                                reason=(
+                                    f"'{value}' is not a" " valid color name"
+                                ),
+                                expected=(
+                                    "letters only, such as" " blue or red"
+                                ),
+                                how_to_fix=(
+                                    "remove digits or"
+                                    " punctuation from"
+                                    " the color value"
+                                ),
+                            )
+                        )
                     metadata[key] = value.lower()
                 elif key == "max_drones":
                     try:
                         max_drones = int(value)
                         if max_drones <= 0:
-                            raise MapFormatError(ErrorInfo(
+                            raise MapFormatError(
+                                ErrorInfo(
+                                    line_number=line_number,
+                                    line_content=line,
+                                    error_start=val_pos,
+                                    error_end=(val_pos + len(value)),
+                                    reason=(
+                                        f"'{value}' must be" " greater than 0"
+                                    ),
+                                    expected=(
+                                        "a positive integer" " greater than 0"
+                                    ),
+                                    how_to_fix=(
+                                        "use a positive number"
+                                        " for max_drones"
+                                    ),
+                                )
+                            )
+                        metadata[key] = max_drones
+                    except ValueError:
+                        raise MapFormatError(
+                            ErrorInfo(
                                 line_number=line_number,
                                 line_content=line,
                                 error_start=val_pos,
-                                error_end=(
-                                    val_pos + len(value)
-                                ),
+                                error_end=val_pos + len(value),
                                 reason=(
-                                    f"'{value}' must be"
-                                    " greater than 0"
+                                    f"'{value}' is not a" " valid integer"
                                 ),
-                                expected=(
-                                    "a positive integer"
-                                    " greater than 0"
-                                ),
+                                expected=("an integer, such as" " 1 or 5"),
                                 how_to_fix=(
-                                    "use a positive number"
-                                    " for max_drones"
+                                    "replace max_drones value"
+                                    " with a whole number"
                                 ),
-                            ))
-                        metadata[key] = max_drones
-                    except ValueError:
-                        raise MapFormatError(ErrorInfo(
+                            )
+                        )
+                else:
+                    raise MapFormatError(
+                        ErrorInfo(
                             line_number=line_number,
                             line_content=line,
-                            error_start=val_pos,
-                            error_end=val_pos + len(value),
+                            error_start=key_pos,
+                            error_end=key_pos + len(key),
                             reason=(
-                                f"'{value}' is not a"
-                                " valid integer"
+                                f"'{key}' is not a valid" " hub metadata key"
                             ),
-                            expected=(
-                                "an integer, such as"
-                                " 1 or 5"
-                            ),
+                            expected=("zone, color, or max_drones"),
                             how_to_fix=(
-                                "replace max_drones value"
-                                " with a whole number"
+                                "rename the key to a"
+                                " supported metadata key"
+                                " or remove it"
                             ),
-                        ))
-                else:
-                    raise MapFormatError(ErrorInfo(
-                        line_number=line_number,
-                        line_content=line,
-                        error_start=key_pos,
-                        error_end=key_pos + len(key),
-                        reason=(
-                            f"'{key}' is not a valid"
-                            " hub metadata key"
-                        ),
-                        expected=(
-                            "zone, color, or max_drones"
-                        ),
-                        how_to_fix=(
-                            "rename the key to a"
-                            " supported metadata key"
-                            " or remove it"
-                        ),
-                    ))
+                        )
+                    )
 
             return metadata
 
     def parse(
-        self, line: str, line_number: int,
+        self,
+        line: str,
+        line_number: int,
     ) -> HubAttribute:
         """
         Parses a full hub definition line.
@@ -195,17 +201,17 @@ class HubParser(ZoneParser):
             line_number (int): The line number in the map file.
 
         Returns:
-            HubAttribute: A tuple containing the hub type, name, x, y coordinates, and metadata.
+            HubAttribute: A tuple containing the hub type, name, x, y
+                coordinates, and metadata.
 
         Raises:
-            MapFormatError: If the line format is invalid or missing required components.
+            MapFormatError: If the line format is invalid or missing required
+                components.
         """
         match = HubRegex.HUB_LINE.match(line)
 
         if not match:
-            raise MapFormatError(
-                HubLineInspector.inspect(line, line_number)
-            )
+            raise MapFormatError(HubLineInspector.inspect(line, line_number))
 
         _type = match.group("type").lower()
         name = match.group("name")
@@ -216,67 +222,55 @@ class HubParser(ZoneParser):
         y_match = HubRegex.ZONE_COORDINATE.match(y)
 
         if not type_match:
-            raise MapFormatError(ErrorInfo(
-                line_number=line_number,
-                line_content=line,
-                error_start=match.start("type"),
-                error_end=match.end("type"),
-                reason=(
-                    f"'{_type}' is not a valid hub type"
-                ),
-                expected=(
-                    "start_hub, hub, or end_hub"
-                ),
-                how_to_fix=(
-                    "use start_hub, hub,"
-                    " or end_hub as the type"
-                ),
-            ))
+            raise MapFormatError(
+                ErrorInfo(
+                    line_number=line_number,
+                    line_content=line,
+                    error_start=match.start("type"),
+                    error_end=match.end("type"),
+                    reason=(f"'{_type}' is not a valid hub type"),
+                    expected=("start_hub, hub, or end_hub"),
+                    how_to_fix=(
+                        "use start_hub, hub," " or end_hub as the type"
+                    ),
+                )
+            )
         if not name_match:
-            raise MapFormatError(ErrorInfo(
-                line_number=line_number,
-                line_content=line,
-                error_start=match.start("name"),
-                error_end=match.end("name"),
-                reason=(
-                    f"'{name}' is not a valid hub name"
-                ),
-                expected=(
-                    "a name without dashes or spaces"
-                ),
-                how_to_fix=(
-                    f"rename '{name}' to a"
-                    " valid identifier"
-                ),
-            ))
+            raise MapFormatError(
+                ErrorInfo(
+                    line_number=line_number,
+                    line_content=line,
+                    error_start=match.start("name"),
+                    error_end=match.end("name"),
+                    reason=(f"'{name}' is not a valid hub name"),
+                    expected=("a name without dashes or spaces"),
+                    how_to_fix=(f"rename '{name}' to a" " valid identifier"),
+                )
+            )
         if not x_match:
-            raise MapFormatError(ErrorInfo(
-                line_number=line_number,
-                line_content=line,
-                error_start=match.start("x"),
-                error_end=match.end("x"),
-                reason=(
-                    f"'{x}' is not a valid x coordinate"
-                ),
-                expected="an integer value for x",
-                how_to_fix=(
-                    f"replace '{x}' with a valid integer"
-                ),
-            ))
+            raise MapFormatError(
+                ErrorInfo(
+                    line_number=line_number,
+                    line_content=line,
+                    error_start=match.start("x"),
+                    error_end=match.end("x"),
+                    reason=(f"'{x}' is not a valid x coordinate"),
+                    expected="an integer value for x",
+                    how_to_fix=(f"replace '{x}' with a valid integer"),
+                )
+            )
         if not y_match:
-            raise MapFormatError(ErrorInfo(
-                line_number=line_number,
-                line_content=line,
-                error_start=match.start("y"),
-                error_end=match.end("y"),
-                reason=(
-                    f"'{y}' is not a valid y coordinate"
-                ),
-                expected="an integer value for y",
-                how_to_fix=(
-                    f"replace '{y}' with a valid integer"
-                ),
-            ))
+            raise MapFormatError(
+                ErrorInfo(
+                    line_number=line_number,
+                    line_content=line,
+                    error_start=match.start("y"),
+                    error_end=match.end("y"),
+                    reason=(f"'{y}' is not a valid y coordinate"),
+                    expected="an integer value for y",
+                    how_to_fix=(f"replace '{y}' with a valid integer"),
+                )
+            )
 
         metadata_str = match.group("metadata")
 
@@ -285,36 +279,34 @@ class HubParser(ZoneParser):
             metadata = {
                 "zone": HubType.NORMAL,
                 "color": "none",
-                "max_drones": 1
+                "max_drones": 1,
             }
         elif not metadata_str.strip():
             bracket_start = line.find("[")
-            bracket_end = line.find(
-                "]", bracket_start
-            ) + 1
-            raise MapFormatError(ErrorInfo(
-                line_number=line_number,
-                line_content=line,
-                error_start=bracket_start,
-                error_end=bracket_end,
-                reason="the metadata block is empty",
-                expected=(
-                    "key=value pairs"
-                    " or no brackets at all"
-                ),
-                how_to_fix=(
-                    "remove the empty brackets"
-                    " or add metadata"
-                ),
-            ))
+            bracket_end = line.find("]", bracket_start) + 1
+            raise MapFormatError(
+                ErrorInfo(
+                    line_number=line_number,
+                    line_content=line,
+                    error_start=bracket_start,
+                    error_end=bracket_end,
+                    reason="the metadata block is empty",
+                    expected=("key=value pairs" " or no brackets at all"),
+                    how_to_fix=(
+                        "remove the empty brackets" " or add metadata"
+                    ),
+                )
+            )
         else:
             raw = metadata_str
             stripped = raw.strip()
             leading = len(raw) - len(raw.lstrip())
             m_offset = match.start("metadata") + leading
             metadata = self.HubMetaDataParser.parse(
-                line, stripped,
-                line_number, m_offset,
+                line,
+                stripped,
+                line_number,
+                m_offset,
             )
 
         return _type, name, int(x), int(y), metadata
@@ -324,16 +316,21 @@ class Hub(Zone):
     """
     Represents a Hub zone on the map.
 
-    Inherits from Zone. Supports properties such as hub type, display color, maximum
+    Inherits from Zone. Supports properties such as hub type, display color,
+    maximum
     drones capacity, traversal cost, and manages reservations.
     """
+
     COST_MAP: Dict[HubType, Optional[int]] = {
         HubType.BLOCKED: None,
-        HubType.RESTRICTED: 2
+        HubType.RESTRICTED: 2,
     }
 
     def __init__(
-        self, name: str, x: int, y: int,
+        self,
+        name: str,
+        x: int,
+        y: int,
         metadata: Dict[str, HubMetaData],
     ) -> None:
         """
@@ -343,7 +340,8 @@ class Hub(Zone):
             name (str): The name of the hub.
             x (int): The x coordinate.
             y (int): The y coordinate.
-            metadata (Dict[str, HubMetaData]): Configuration metadata for the hub.
+            metadata (Dict[str, HubMetaData]): Configuration metadata for the
+                hub.
         """
         super().__init__(name, x, y)
         self.__type = cast(
@@ -351,17 +349,11 @@ class Hub(Zone):
             metadata.get("zone", HubType.NORMAL),
         )
         try:
-            self.__color: Color = Color(
-                metadata.get("color", "none")
-            )
+            self.__color: Color = Color(metadata.get("color", "none"))
         except ValueError:
             self.__color = Color("white")
-        self.__max_drones = cast(
-            int, metadata.get("max_drones", 1)
-        )
-        self.__cost: Optional[int] = self.COST_MAP.get(
-            self.__type, 1
-        )
+        self.__max_drones = cast(int, metadata.get("max_drones", 1))
+        self.__cost: Optional[int] = self.COST_MAP.get(self.__type, 1)
         self.__reservations: Dict[int, int] = {}
 
     @property
@@ -376,12 +368,14 @@ class Hub(Zone):
 
     @property
     def max_drones(self) -> int:
-        """int: The maximum number of drones that can occupy the hub concurrently."""
+        """int: The maximum number of drones that can occupy the hub
+        concurrently."""
         return self.__max_drones
 
     @property
     def cost(self) -> Optional[int]:
-        """Optional[int]: The cost/time to traverse this hub. None if blocked."""
+        """Optional[int]: The cost/time to traverse this hub. None if
+        blocked."""
         return self.__cost
 
     def can_reserve(self, time: int) -> bool:
@@ -392,12 +386,12 @@ class Hub(Zone):
             time (int): The turn number to check.
 
         Returns:
-            bool: True if it can be reserved, False otherwise (e.g., if blocked or at capacity).
+            bool: True if it can be reserved, False otherwise (e.g., if blocked
+                or at capacity).
         """
         return (
             self.__type is not HubType.BLOCKED
-            and self.__reservations.get(time, 0)
-            < self.__max_drones
+            and self.__reservations.get(time, 0) < self.__max_drones
         )
 
     def reserve(self, time: int) -> None:
@@ -407,15 +401,15 @@ class Hub(Zone):
         Args:
             time (int): The turn number to reserve.
         """
-        self.__reservations[time] = (
-            self.__reservations.get(time, 0) + 1
-        )
+        self.__reservations[time] = self.__reservations.get(time, 0) + 1
 
     def nearest_reservation(
-        self, start_time: int,
+        self,
+        start_time: int,
     ) -> int:
         """
-        Finds the nearest future time from start_time when the hub can be reserved.
+        Finds the nearest future time from start_time when the hub can be
+        reserved.
 
         Args:
             start_time (int): The time to start checking from.
@@ -436,10 +430,7 @@ class Hub(Zone):
             str: The colored string representation.
         """
         r, g, b, _ = self.__color
-        return (
-            f"\x1b[38;2;{r};{g};{b}m"
-            f"{self.name}\x1b[0m"
-        )
+        return f"\x1b[38;2;{r};{g};{b}m" f"{self.name}\x1b[0m"
 
 
 class StartHub(Hub):
@@ -448,8 +439,12 @@ class StartHub(Hub):
 
     Guarantees sufficient capacity for all initial drones.
     """
+
     def __init__(
-        self, name: str, x: int, y: int,
+        self,
+        name: str,
+        x: int,
+        y: int,
         nb_drones: int,
         metadata: Dict[str, HubMetaData],
     ) -> None:
@@ -461,7 +456,8 @@ class StartHub(Hub):
             x (int): The x coordinate.
             y (int): The y coordinate.
             nb_drones (int): The total number of drones that start here.
-            metadata (Dict[str, HubMetaData]): Configuration metadata for the hub.
+            metadata (Dict[str, HubMetaData]): Configuration metadata for the
+                hub.
         """
         metadata["max_drones"] = max(
             metadata.get("max_drones", nb_drones),
@@ -476,8 +472,12 @@ class EndHub(Hub):
 
     Guarantees sufficient capacity for all incoming drones.
     """
+
     def __init__(
-        self, name: str, x: int, y: int,
+        self,
+        name: str,
+        x: int,
+        y: int,
         nb_drones: int,
         metadata: Dict[str, HubMetaData],
     ) -> None:
@@ -489,7 +489,8 @@ class EndHub(Hub):
             x (int): The x coordinate.
             y (int): The y coordinate.
             nb_drones (int): The total number of drones that will end here.
-            metadata (Dict[str, HubMetaData]): Configuration metadata for the hub.
+            metadata (Dict[str, HubMetaData]): Configuration metadata for the
+                hub.
         """
         metadata["max_drones"] = max(
             metadata.get("max_drones", nb_drones),

@@ -15,6 +15,7 @@ class HubType(StrEnum):
         RESTRICTED: Hub that has an additional time cost (2 turns).
         PRIORITY: Hub that is prioritized during pathfinding.
     """
+
     NORMAL = "normal"
     BLOCKED = "blocked"
     RESTRICTED = "restricted"
