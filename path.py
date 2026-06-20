@@ -120,11 +120,13 @@ class PathFinder:
                     current_cost + next_wait + cast(int, neighbour.cost)
                 )
 
-                next_priority = priority - (
-                    1 if neighbour.type
-                    is HubType.PRIORITY else 0
-                )
-                if current != start_hub:
+                next_priority: int = priority
+                if current == start_hub:
+                    next_priority = (
+                        0 if neighbour.type
+                        is HubType.PRIORITY else 1
+                    )
+                else:
                     next_wait = wait
 
                 if next_cost not in buckets:
