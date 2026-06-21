@@ -114,9 +114,10 @@ class ConnectionFactory:
             MapLogicError: If the connection is a self-loop, links undefined
                 hubs, or is a duplicate.
         """
-        zone1, zone2, max_link_capacity = self.__parser.parse(
+        zone1, zone2, metadata = self.__parser.parse(
             line, line_number
         )
+        max_link_capacity: int = metadata.get("max_link_capacity", 1)
 
         if zone1 == zone2:
             raise MapLogicError(

@@ -1,8 +1,8 @@
 from re import Match
 from hub import Hub
 from typing import Dict, Optional
-from mytypes import ConnectionAttribute
-from myregex import ConnectionRegex
+from mytypes import ConnectionAttribute, ConnectionMetaData
+from myregex import ConnectionRegex, HubRegex
 from exceptions import (
     MapFormatError,
     ErrorInfo,
@@ -23,6 +23,10 @@ class ConnectionParser:
         """
         Sub-parser for handling the metadata block within a connection
         definition line.
+
+        Parses one or more key=value pairs, mirroring the behaviour of
+        HubParser.HubMetaDataParser. Returns a dict of all parsed attributes.
+        The only currently supported key is ``max_link_capacity``.
         """
 
         @staticmethod
@@ -31,10 +35,9 @@ class ConnectionParser:
             metadata_str: str,
             line_number: int,
             metadata_offset: int,
-        ) -> int:
+        ) -> Dict[str, ConnectionMetaData]:
             """
-            Parses the metadata string for a connection to extract max link
-            capacity.
+            Parses all key=value pairs from a connection metadata block.
 
             Args:
                 line (str): The original line from the map file.
@@ -45,15 +48,14 @@ class ConnectionParser:
                     begins in the line.
 
             Returns:
-                int: The maximum link capacity parsed from metadata.
+                Dict[str, ConnectionMetaData]: The parsed metadata key-value
+                    pairs.
 
             Raises:
-                MapFormatError: If the metadata format is invalid, missing,
-                    or contains invalid capacity values.
+                MapFormatError: If the metadata format is invalid, contains
+                    unknown keys, or contains invalid values.
             """
-            match = ConnectionRegex.CONNECTION_METADATA.match(metadata_str)
-
-            if not match:
+            if not ConnectionRegex.CONNECTION_METADATA.match(metadata_str):
                 raise MapFormatError(
                     ConnectionMetadataInspector.inspect(
                         line,
@@ -63,56 +65,85 @@ class ConnectionParser:
                     )
                 )
 
-            key = match.group("key").lower()
-            value = match.group("value")
-            key_pos = line.find(key, metadata_offset)
-            val_pos = line.find(value, key_pos + len(key))
+            metadata: Dict[str, ConnectionMetaData] = {}
+            remaining = metadata_str.strip()
+            search_from = metadata_offset
 
-            if key != "max_link_capacity":
-                raise MapFormatError(
-                    ErrorInfo(
-                        line_number=line_number,
-                        line_content=line,
-                        error_start=key_pos,
-                        error_end=key_pos + len(key),
-                        reason=(
-                            f"'{key}' is not a valid"
-                            " connection metadata key"
-                        ),
-                        expected="max_link_capacity",
-                        how_to_fix=("rename the key" " to max_link_capacity"),
+            while remaining:
+                match = HubRegex.PAIRS_KV.match(remaining)
+                if not match:
+                    raise MapFormatError(
+                        ConnectionMetadataInspector.inspect(
+                            line,
+                            metadata_str,
+                            line_number,
+                            metadata_offset,
+                        )
                     )
-                )
 
-            try:
-                capacity = int(value)
-            except ValueError:
-                raise MapFormatError(
-                    ErrorInfo(
-                        line_number=line_number,
-                        line_content=line,
-                        error_start=val_pos,
-                        error_end=val_pos + len(value),
-                        reason=(f"'{value}' is not" " a valid integer"),
-                        expected="a positive integer",
-                        how_to_fix=("replace with a positive integer"),
+                key = match.group("key").lower()
+                value = match.group("value")
+                key_pos = line.find(key, search_from)
+                val_pos = line.find(value, key_pos + len(key))
+                search_from = val_pos + len(value)
+                remaining = remaining[match.end():].strip()
+
+                if key == "max_link_capacity":
+                    try:
+                        capacity = int(value)
+                    except ValueError:
+                        raise MapFormatError(
+                            ErrorInfo(
+                                line_number=line_number,
+                                line_content=line,
+                                error_start=val_pos,
+                                error_end=val_pos + len(value),
+                                reason=(
+                                    f"'{value}' is not a valid integer"
+                                ),
+                                expected="a positive integer",
+                                how_to_fix=(
+                                    "replace with a positive integer"
+                                ),
+                            )
+                        )
+                    if capacity <= 0:
+                        raise MapFormatError(
+                            ErrorInfo(
+                                line_number=line_number,
+                                line_content=line,
+                                error_start=val_pos,
+                                error_end=val_pos + len(value),
+                                reason=(
+                                    f"'{value}' must be greater than 0"
+                                ),
+                                expected=(
+                                    "a positive integer greater than 0"
+                                ),
+                                how_to_fix=("use a number greater than 0"),
+                            )
+                        )
+                    metadata[key] = capacity
+                else:
+                    raise MapFormatError(
+                        ErrorInfo(
+                            line_number=line_number,
+                            line_content=line,
+                            error_start=key_pos,
+                            error_end=key_pos + len(key),
+                            reason=(
+                                f"'{key}' is not a valid"
+                                " connection metadata key"
+                            ),
+                            expected="max_link_capacity",
+                            how_to_fix=(
+                                "rename the key to a supported"
+                                " metadata key or remove it"
+                            ),
+                        )
                     )
-                )
 
-            if capacity <= 0:
-                raise MapFormatError(
-                    ErrorInfo(
-                        line_number=line_number,
-                        line_content=line,
-                        error_start=val_pos,
-                        error_end=val_pos + len(value),
-                        reason=(f"'{value}' must be" " greater than 0"),
-                        expected=("a positive integer" " greater than 0"),
-                        how_to_fix=("use a number greater than 0"),
-                    )
-                )
-
-            return capacity
+            return metadata
 
     def parse(
         self,
@@ -127,8 +158,8 @@ class ConnectionParser:
             line_number (int): The line number in the map file.
 
         Returns:
-            ConnectionAttribute: A tuple containing zone1, zone2, and the
-                max link capacity.
+            ConnectionAttribute: A tuple containing zone1, zone2, and a dict
+                of parsed metadata key-value pairs.
 
         Raises:
             MapFormatError: If the line format is invalid or missing required
@@ -148,7 +179,7 @@ class ConnectionParser:
 
         zone1 = match.group("zone1")
         zone2 = match.group("zone2")
-        max_link_capacity = 1
+        metadata: Dict[str, ConnectionMetaData] = {}
         metadata_str = match.group("metadata")
 
         if metadata_str is not None:
@@ -169,12 +200,11 @@ class ConnectionParser:
                         error_end=bracket_end,
                         reason=("the metadata block is empty"),
                         expected=(
-                            "max_link_capacity="
-                            "<positive integer>"
-                            " or no brackets"
+                            "key=value pairs"
+                            " or no brackets at all"
                         ),
                         how_to_fix=(
-                            "remove empty brackets" " or add metadata"
+                            "remove empty brackets or add metadata"
                         ),
                     )
                 )
@@ -183,14 +213,14 @@ class ConnectionParser:
                 stripped = raw.strip()
                 leading = len(raw) - len(raw.lstrip())
                 m_offset = match.start("metadata") + leading
-                max_link_capacity = self.ConnectionMetaDataParser.parse(
+                metadata = self.ConnectionMetaDataParser.parse(
                     line,
                     stripped,
                     line_number,
                     m_offset,
                 )
 
-        return zone1, zone2, max_link_capacity
+        return zone1, zone2, metadata
 
 
 class Connection:

@@ -50,5 +50,5 @@ class ConnectionRegex:
     )
 
     CONNECTION_METADATA: Pattern[str] = compile(
-        r"^\s*(?P<key>[^\s=]+)\s*=\s*(?P<value>\S+)\s*$"
+        r"^\s*(?:(?P<key>[^\s=]+)\s*=\s*(?P<value>\S+)(?:\s+|$))+\s*$"
     )

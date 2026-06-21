@@ -24,5 +24,6 @@ class HubType(StrEnum):
 
 HubMetaData = Union[HubType, str, int]
 HubAttribute = Tuple[str, str, int, int, Dict[str, HubMetaData]]
-ConnectionAttribute = Tuple[str, str, int]
+ConnectionMetaData = int
+ConnectionAttribute = Tuple[str, str, Dict[str, "ConnectionMetaData"]]
 MapAttributes = Tuple[int, "StartHub", Dict[str, "Hub"], "EndHub"]
