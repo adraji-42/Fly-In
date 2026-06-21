@@ -73,8 +73,7 @@ class DroneScheduler:
             while not all(
                 connection.can_reserve(time + t) for t in range(cost)
             ) or not next_hub.can_reserve(time + cost):
-                current.reserve(time)
-                time += 1
+                current.reserve((time := time + 1))
 
             for t in range(cost):
                 connection.reserve(time + t)

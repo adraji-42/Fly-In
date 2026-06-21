@@ -15,7 +15,7 @@ def main() -> None:
     map = Map(argv[1])
     engine = Simulation(map)
     for turn, output in enumerate(engine.run(), 1):
-        print(f"{output}")
+        print(f"{turn}: {output}")
 
 
 if __name__ == "__main__":

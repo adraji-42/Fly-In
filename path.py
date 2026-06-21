@@ -72,6 +72,16 @@ class PathFinder:
         """
         Finds the optimal path from the start_hub to an EndHub.
 
+        Paths are selected using the following strict priority order:
+          1. Lowest total path cost (primary criterion, enforced by bucket key).
+          2. First-zone priority: prefer paths whose first hub is a Priority
+             zone (0 = priority zone, 1 = other; min-heap selects 0 first).
+          3. Lowest waiting time to reach the first zone.
+          4. Unique counter as a deterministic final tie-breaker.
+
+        Criteria 2-4 are fixed at the first hop and carried forward unchanged
+        so that deeper hops never alter the tie-breaking rank of a path.
+
         Args:
             start_hub (Hub): The hub from which to start the search.
             time (int): The starting time. Defaults to 0.
@@ -96,8 +106,8 @@ class PathFinder:
                 current_cost = min(buckets)
                 continue
 
-            priority, wait, _, current, hubs, connections = heappop(
-                buckets[current_cost]
+            first_zone_priority, first_wait, _, current, hubs, connections = (
+                heappop(buckets[current_cost])
             )
 
             if not buckets[current_cost]:
@@ -120,22 +130,22 @@ class PathFinder:
                     current_cost + next_wait + cast(int, neighbour.cost)
                 )
 
-                next_priority: int = priority
-                if current == start_hub:
-                    next_priority = (
-                        0 if neighbour.type
-                        is HubType.PRIORITY else 1
+                if current is start_hub:
+                    next_first_zone_priority = (
+                        0 if neighbour.type is HubType.PRIORITY else 1
                     )
+                    next_first_wait = next_wait
                 else:
-                    next_wait = wait
+                    next_first_zone_priority = first_zone_priority
+                    next_first_wait = first_wait
 
                 if next_cost not in buckets:
                     buckets[next_cost] = []
                 heappush(
                     buckets[next_cost],
                     (
-                        next_priority,
-                        next_wait,
+                        next_first_zone_priority,
+                        next_first_wait,
                         next(unique),
                         neighbour,
                         hubs + [neighbour],
