@@ -73,7 +73,7 @@ class PathFinder:
         Finds the optimal path from the start_hub to an EndHub.
 
         Paths are selected using the following strict priority order:
-          1. Lowest total path cost (primary criterion, enforced by bucket key).
+          1. Lowest total path cost.
           2. First-zone priority: prefer paths whose first hub is a Priority
              zone (0 = priority zone, 1 = other; min-heap selects 0 first).
           3. Lowest waiting time to reach the first zone.
