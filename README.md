@@ -28,6 +28,37 @@ make lint
 make lint-strict
 ```
 
+## Example
+### Input File
+```
+nb_drones: 5
+
+start_hub: hub 0 0 [color=green]
+hub: roof1 3 4 [zone=restricted color=red]
+hub: roof2 6 2 [zone=normal color=blue]
+hub: corridorA 4 3 [zone=priority color=green max_drones=2]
+hub: tunnelB 7 4 [zone=normal color=red]
+hub: obstacleX 5 5 [zone=blocked color=gray]
+end_hub: goal 10 10 [color=yellow]
+
+connection: hub-roof1
+connection: hub-corridorA
+connection: roof1-roof2
+connection: roof2-goal
+connection: corridorA-tunnelB [max_link_capacity=2]
+connection: tunnelB-goal
+```
+### Expected Output
+```
+1: D1-corridorA D3-hub-roof1
+2: D1-tunnelB D2-corridorA D3-roof1
+3: D1-goal D2-tunnelB D3-roof2 D4-corridorA
+4: D2-goal D3-goal D4-tunnelB D5-corridorA
+5: D4-goal D5-tunnelB
+6: D5-goal
+```
+
+
 ## Algorithm & Implementation Strategy
 The core routing strategy utilizes a graph pathfinding approach, avoiding third-party graph libraries (such as `networkx`). The implementation revolves around:
 - **State Evaluation Turn-by-Turn**: Moving drones conditionally based on connection and zone capacities (`max_drones` and `max_link_capacity`).
